@@ -21,8 +21,8 @@ import AdminMessages from './pages/admin/AdminMessages'
 
 function App() {
   return (
-    <Provider store={store}>
-      <Router basename="/ecommerce">
+        <Provider store={store}>
+          <Router basename="/">
         <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
