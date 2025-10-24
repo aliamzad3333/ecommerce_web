@@ -48,46 +48,33 @@ jobs:
         name: build-files
         path: dist/
         
-    - name: Deploy to server via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        password: ${{ secrets.SERVER_PASSWORD }}
-        port: 22
-        timeout: 30s
-        script: |
-          # Create backup of current deployment
-          cp -r /www/wwwroot/ecommerce /www/wwwroot/ecommerce.backup.$(date +%Y%m%d_%H%M%S) || true
-          
-          # Create deployment directory if it doesn't exist
-          mkdir -p /www/wwwroot/ecommerce
-          
-    - name: Copy files to server
+    - name: Deploy using rsync
       run: |
         # Install sshpass for password authentication
         sudo apt-get update && sudo apt-get install -y sshpass
         
-        # Copy built files to server using scp with password
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
+        # Create deployment directory and backup using SSH
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          # Create backup of current deployment
+          cp -r /www/wwwroot/ecommerce /www/wwwroot/ecommerce.backup.\$(date +%Y%m%d_%H%M%S) || true
+          
+          # Create deployment directory if it doesn't exist
+          mkdir -p /www/wwwroot/ecommerce
+        "
         
-    - name: Finalize deployment
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        password: ${{ secrets.SERVER_PASSWORD }}
-        port: 22
-        timeout: 30s
-        script: |
+        # Copy files using rsync with password
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" rsync -avz --delete -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
+        
+        # Set permissions and create config files
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           # Set proper permissions for aaPanel
           chmod -R 755 /www/wwwroot/ecommerce
           chmod -R 644 /www/wwwroot/ecommerce/*
           
-          # Create nginx configuration for React Router (if using client-side routing)
+          # Create nginx configuration for React Router
           cat > /www/wwwroot/ecommerce/nginx.conf << 'EOF'
           location / {
-            try_files $uri $uri/ /index.html;
+            try_files \$uri \$uri/ /index.html;
           }
           EOF
           
@@ -95,7 +82,7 @@ jobs:
           cat > /www/wwwroot/ecommerce/.htaccess << 'EOF'
           RewriteEngine On
           RewriteBase /
-          RewriteRule ^index\.html$ - [L]
+          RewriteRule ^index\.html\$ - [L]
           RewriteCond %{REQUEST_FILENAME} !-f
           RewriteCond %{REQUEST_FILENAME} !-d
           RewriteRule . /index.html [L]
@@ -108,5 +95,6 @@ jobs:
           # Reload Nginx
           nginx -s reload || systemctl reload nginx || true
           
-          echo "Deployment completed successfully!"
-          echo "Your ecommerce app is now live at: http://130.94.40.85/ecommerce/"
+          echo 'Deployment completed successfully!'
+          echo 'Your ecommerce app is now live at: http://130.94.40.85/ecommerce/'
+        "
