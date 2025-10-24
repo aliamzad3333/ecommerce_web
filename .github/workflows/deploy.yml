@@ -78,6 +78,22 @@ jobs:
         echo "Copying files to server..."
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
         
+        # Copy assets to root level so they can be served from /assets/
+        echo "Copying assets to root level..."
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          # Create assets directory in root if it doesn't exist
+          mkdir -p /www/wwwroot/assets
+          
+          # Copy assets from ecommerce directory to root assets directory
+          cp -r /www/wwwroot/ecommerce/assets/* /www/wwwroot/assets/ 2>/dev/null || true
+          
+          # Set proper permissions for root assets
+          chmod -R 755 /www/wwwroot/assets
+          chmod -R 644 /www/wwwroot/assets/*
+          
+          echo 'Assets copied to root level'
+        "
+        
         # Set permissions and create config files
         echo "Setting permissions and creating config files..."
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
