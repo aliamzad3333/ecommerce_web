@@ -78,9 +78,21 @@ jobs:
         echo "Copying files to server..."
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
         
-        # Also copy to root for direct access
-        echo "Copying files to root directory..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/
+        # Create a proper website directory structure
+        echo "Creating proper website structure..."
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+          # Create a new website directory
+          mkdir -p /www/wwwroot/ecommerce-site
+          
+          # Copy files to the new directory
+          cp -r /www/wwwroot/ecommerce/* /www/wwwroot/ecommerce-site/ 2>/dev/null || true
+          
+          # Set proper permissions
+          chmod -R 755 /www/wwwroot/ecommerce-site
+          chmod -R 644 /www/wwwroot/ecommerce-site/*
+          
+          echo 'Website structure created'
+        "
         
         # Copy assets to root level so they can be served from /assets/
         echo "Copying assets to root level..."
