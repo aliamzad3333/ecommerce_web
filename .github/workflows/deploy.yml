@@ -53,20 +53,29 @@ jobs:
         # Install sshpass for password authentication
         sudo apt-get update && sudo apt-get install -y sshpass
         
+        # Test SSH connection first
+        echo "Testing SSH connection..."
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
+        
         # Create deployment directory and backup using SSH
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+        echo "Creating backup and deployment directory..."
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           # Create backup of current deployment
           cp -r /www/wwwroot/ecommerce /www/wwwroot/ecommerce.backup.\$(date +%Y%m%d_%H%M%S) || true
           
           # Create deployment directory if it doesn't exist
           mkdir -p /www/wwwroot/ecommerce
+          
+          echo 'Backup and directory creation completed'
         "
         
         # Copy files using rsync with password
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" rsync -avz --delete -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
+        echo "Copying files to server..."
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" rsync -avz --delete --timeout=30 -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10' dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
         
         # Set permissions and create config files
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+        echo "Setting permissions and creating config files..."
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           # Set proper permissions for aaPanel
           chmod -R 755 /www/wwwroot/ecommerce
           chmod -R 644 /www/wwwroot/ecommerce/*
