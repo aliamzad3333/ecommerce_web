@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { registerUser } from '../store/slices/userSlice'
+import { useAppDispatch } from '../hooks/redux'
 
 const Register = () => {
   const navigate = useNavigate()
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -15,7 +15,6 @@ const Register = () => {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

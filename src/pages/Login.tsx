@@ -1,19 +1,18 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { loginUser } from '../store/slices/userSlice'
+import { useAppDispatch } from '../hooks/redux'
 
 const Login = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   })
   const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
   const from = location.state?.from?.pathname || '/'
