@@ -23,7 +23,7 @@ You need to add the following secrets to your GitHub repository:
 SERVER_HOST=your-server-ip-or-domain
 SERVER_USER=your-server-username
 SERVER_SSH_KEY=your-private-ssh-key
-```
+```no want
 
 #### 2. Server Setup
 
@@ -49,7 +49,12 @@ On your server, ensure you have:
 
 #### 4. Server Directory Setup
 
-The deployment script assumes your web files are served from `/var/www/ecommerce`. Adjust the paths in the workflow file if needed.
+The deployment script deploys to `/www/wwwroot/ecommerce/` which is the standard aaPanel directory structure. Your app will be accessible at `http://130.94.40.85/ecommerce/`.
+
+**Alternative deployment locations:**
+- **Root IP**: Deploy to `/www/wwwroot/default/` (files go directly to http://130.94.40.85/)
+- **Subdirectory**: Deploy to `/www/wwwroot/ecommerce/` (files go to http://130.94.40.85/ecommerce/)
+- **Custom folder**: Deploy to `/www/wwwroot/myapp/` (files go to http://130.94.40.85/myapp/)
 
 ### Deployment Process
 
@@ -72,11 +77,14 @@ The deployment script assumes your web files are served from `/var/www/ecommerce
 If your server setup is different, modify the deployment script in `.github/workflows/deploy.yml`:
 
 ```yaml
-# For different web server
-sudo systemctl reload nginx  # or apache2
+# For aaPanel deployment (current setup)
+scp -r dist/* user@130.94.40.85:/www/wwwroot/ecommerce/
 
-# For different deployment directory
-sudo cp -r /tmp/ecommerce-build/* /your/custom/path/
+# For root IP deployment
+scp -r dist/* user@130.94.40.85:/www/wwwroot/default/
+
+# For custom folder deployment
+scp -r dist/* user@130.94.40.85:/www/wwwroot/myapp/
 ```
 
 #### Environment Variables
@@ -102,9 +110,8 @@ If you need environment variables for your build, add them to GitHub Secrets and
 If a deployment fails, you can manually rollback:
 
 ```bash
-# On your server
-sudo cp -r /var/www/ecommerce.backup.YYYYMMDD_HHMMSS/* /var/www/ecommerce/
-sudo systemctl reload nginx
+# On your server (aaPanel)
+cp -r /www/wwwroot/ecommerce.backup.YYYYMMDD_HHMMSS/* /www/wwwroot/ecommerce/
 ```
 
 ### Troubleshooting
