@@ -74,9 +74,9 @@ jobs:
           echo 'Backup and directory creation completed'
         "
         
-        # Copy files using rsync with password
+        # Copy files using scp with password
         echo "Copying files to server..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" rsync -avz --delete --timeout=30 -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no' dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
         
         # Set permissions and create config files
         echo "Setting permissions and creating config files..."
