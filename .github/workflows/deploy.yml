@@ -59,12 +59,12 @@ jobs:
         echo "User: ${{ secrets.SERVER_USER }}"
         echo "Password length: ${#SERVER_PASSWORD}"
         
-        # Test with verbose output
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
+        # Test with password authentication only (disable public key auth)
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
         
         # Create deployment directory and backup using SSH
         echo "Creating backup and deployment directory..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           # Create backup of current deployment
           cp -r /www/wwwroot/ecommerce /www/wwwroot/ecommerce.backup.\$(date +%Y%m%d_%H%M%S) || true
           
@@ -76,11 +76,11 @@ jobs:
         
         # Copy files using rsync with password
         echo "Copying files to server..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" rsync -avz --delete --timeout=30 -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10' dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" rsync -avz --delete --timeout=30 -e 'ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no' dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
         
         # Set permissions and create config files
         echo "Setting permissions and creating config files..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           # Set proper permissions for aaPanel
           chmod -R 755 /www/wwwroot/ecommerce
           chmod -R 644 /www/wwwroot/ecommerce/*
