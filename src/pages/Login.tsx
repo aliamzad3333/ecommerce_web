@@ -13,6 +13,7 @@ const Login = () => {
     password: '',
   })
   const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
   const from = location.state?.from?.pathname || '/'
@@ -30,6 +31,7 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
 
     try {
       const result = await dispatch(loginUser({
@@ -45,6 +47,8 @@ const Login = () => {
       }
     } catch (error: any) {
       setError(error || 'Login failed')
+    } finally {
+      setIsLoading(false)
     }
   }
 

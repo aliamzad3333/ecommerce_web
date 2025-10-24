@@ -15,6 +15,7 @@ const Register = () => {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,6 +43,8 @@ const Register = () => {
       return
     }
 
+    setIsLoading(true)
+
     try {
       await dispatch(registerUser({
         name: formData.name,
@@ -53,6 +56,8 @@ const Register = () => {
       navigate('/', { replace: true })
     } catch (error: any) {
       setError(error || 'Registration failed')
+    } finally {
+      setIsLoading(false)
     }
   }
 
