@@ -85,26 +85,63 @@ jobs:
           chmod -R 755 /www/wwwroot/ecommerce
           chmod -R 644 /www/wwwroot/ecommerce/*
           
-          # Create nginx configuration for React Router
-          cat > /www/wwwroot/ecommerce/nginx.conf << 'EOF'
-          location / {
-            try_files \$uri \$uri/ /index.html;
+          # Create proper Nginx configuration
+          cat > /www/server/nginx/conf/130.94.40.85.conf << 'EOF'
+          server {
+              listen 80;
+              server_name 130.94.40.85;
+              
+              # Root directory for the ecommerce app
+              root /www/wwwroot;
+              
+              # Serve the main React app
+              location /ecommerce/ {
+                  alias /www/wwwroot/ecommerce/;
+                  index index.html;
+                  try_files \$uri \$uri/ /ecommerce/index.html;
+                  
+                  # Set proper headers for HTML files
+                  location ~* \.html\$ {
+                      add_header Content-Type text/html;
+                  }
+              }
+              
+              # Serve assets with proper MIME types
+              location /ecommerce/assets/ {
+                  alias /www/wwwroot/ecommerce/assets/;
+                  
+                  # Set proper MIME types
+                  location ~* \.js\$ {
+                      add_header Content-Type application/javascript;
+                      expires 1y;
+                      add_header Cache-Control \"public, immutable\";
+                  }
+                  
+                  location ~* \.css\$ {
+                      add_header Content-Type text/css;
+                      expires 1y;
+                      add_header Cache-Control \"public, immutable\";
+                  }
+                  
+                  location ~* \.(png|jpg|jpeg|gif|ico|svg)\$ {
+                      expires 1y;
+                      add_header Cache-Control \"public, immutable\";
+                  }
+              }
+              
+              # Handle other static files
+              location /ecommerce/ {
+                  alias /www/wwwroot/ecommerce/;
+                  try_files \$uri \$uri/ /ecommerce/index.html;
+              }
           }
           EOF
           
-          # Create .htaccess for Apache fallback
-          cat > /www/wwwroot/ecommerce/.htaccess << 'EOF'
-          RewriteEngine On
-          RewriteBase /
-          RewriteRule ^index\.html\$ - [L]
-          RewriteCond %{REQUEST_FILENAME} !-f
-          RewriteCond %{REQUEST_FILENAME} !-d
-          RewriteRule . /index.html [L]
-          EOF
+          # Set proper permissions for the config file
+          chmod 644 /www/server/nginx/conf/130.94.40.85.conf
           
-          # Set proper permissions
-          chmod 644 /www/wwwroot/ecommerce/.htaccess
-          chmod 644 /www/wwwroot/ecommerce/nginx.conf
+          # Test Nginx configuration
+          nginx -t
           
           # Reload Nginx
           nginx -s reload || systemctl reload nginx || true
