@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
-import { setUser } from '../store/slices/userSlice'
+import { registerUser } from '../store/slices/userSlice'
 
 const Register = () => {
   const navigate = useNavigate()
@@ -30,39 +30,31 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     setError('')
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
-      setIsLoading(false)
       return
     }
 
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long')
-      setIsLoading(false)
       return
     }
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    // Create new user account
-    const newUser = {
-      id: `user-${Date.now()}`,
-      name: formData.name,
-      email: formData.email,
-      isAdmin: false, // New users are not admins by default
+    try {
+      await dispatch(registerUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      })).unwrap()
+      
+      // Redirect to home page after successful registration
+      navigate('/', { replace: true })
+    } catch (error: any) {
+      setError(error || 'Registration failed')
     }
-
-    dispatch(setUser(newUser))
-    
-    // Redirect to home page after successful registration
-    navigate('/', { replace: true })
-
-    setIsLoading(false)
   }
 
   return (

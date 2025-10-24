@@ -1,4 +1,5 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, type PayloadAction, createAsyncThunk } from '@reduxjs/toolkit'
+import apiClient from '../../services/api'
 
 export interface Product {
   id: string
@@ -28,81 +29,69 @@ interface ProductState {
   error: string | null
 }
 
+// Async thunks for API calls
+export const fetchProducts = createAsyncThunk(
+  'products/fetchProducts',
+  async (_, { rejectWithValue }) => {
+    try {
+      const products = await apiClient.getProducts()
+      return products
+    } catch (error: any) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const fetchProduct = createAsyncThunk(
+  'products/fetchProduct',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const product = await apiClient.getProduct(id)
+      return product
+    } catch (error: any) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const createProduct = createAsyncThunk(
+  'products/createProduct',
+  async (productData: Partial<Product>, { rejectWithValue }) => {
+    try {
+      const product = await apiClient.createProduct(productData)
+      return product
+    } catch (error: any) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const updateProduct = createAsyncThunk(
+  'products/updateProduct',
+  async ({ id, productData }: { id: string; productData: Partial<Product> }, { rejectWithValue }) => {
+    try {
+      const product = await apiClient.updateProduct(id, productData)
+      return product
+    } catch (error: any) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const deleteProduct = createAsyncThunk(
+  'products/deleteProduct',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await apiClient.deleteProduct(id)
+      return id
+    } catch (error: any) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const initialState: ProductState = {
-  products: [
-    {
-      id: '1',
-      name: 'Premium Wireless Headphones',
-      price: 299.99,
-      image: '/api/placeholder/300/300',
-      description: 'High-quality wireless headphones with noise cancellation',
-      category: 'Electronics',
-      inStock: true,
-      rating: 4.8,
-      reviews: 124,
-      featured: true,
-    },
-    {
-      id: '2',
-      name: 'Smart Fitness Watch',
-      price: 199.99,
-      image: '/api/placeholder/300/300',
-      description: 'Track your fitness with this advanced smartwatch',
-      category: 'Electronics',
-      inStock: true,
-      rating: 4.6,
-      reviews: 89,
-      featured: true,
-    },
-    {
-      id: '3',
-      name: 'Organic Cotton T-Shirt',
-      price: 29.99,
-      image: '/api/placeholder/300/300',
-      description: 'Comfortable and sustainable cotton t-shirt',
-      category: 'Clothing',
-      inStock: true,
-      rating: 4.4,
-      reviews: 67,
-      featured: false,
-    },
-    {
-      id: '4',
-      name: 'Stainless Steel Water Bottle',
-      price: 24.99,
-      image: '/api/placeholder/300/300',
-      description: 'Keep your drinks cold for 24 hours',
-      category: 'Accessories',
-      inStock: true,
-      rating: 4.7,
-      reviews: 156,
-      featured: false,
-    },
-    {
-      id: '5',
-      name: 'Wireless Charging Pad',
-      price: 49.99,
-      image: '/api/placeholder/300/300',
-      description: 'Fast wireless charging for your devices',
-      category: 'Electronics',
-      inStock: false,
-      rating: 4.5,
-      reviews: 78,
-      featured: false,
-    },
-    {
-      id: '6',
-      name: 'Leather Backpack',
-      price: 149.99,
-      image: '/api/placeholder/300/300',
-      description: 'Premium leather backpack for daily use',
-      category: 'Accessories',
-      inStock: true,
-      rating: 4.9,
-      reviews: 203,
-      featured: true,
-    },
-  ],
+  products: [],
   filteredProducts: [],
   searchQuery: '',
   selectedCategory: 'All',
@@ -152,6 +141,61 @@ const productSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      // Fetch products
+      .addCase(fetchProducts.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchProducts.fulfilled, (state, action) => {
+        state.loading = false
+        state.products = action.payload
+        state.filteredProducts = action.payload
+        state.error = null
+      })
+      .addCase(fetchProducts.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
+      // Fetch single product
+      .addCase(fetchProduct.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchProduct.fulfilled, (state, action) => {
+        state.loading = false
+        const existingIndex = state.products.findIndex(p => p.id === action.payload.id)
+        if (existingIndex >= 0) {
+          state.products[existingIndex] = action.payload
+        } else {
+          state.products.push(action.payload)
+        }
+        state.error = null
+      })
+      .addCase(fetchProduct.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload as string
+      })
+      // Create product
+      .addCase(createProduct.fulfilled, (state, action) => {
+        state.products.push(action.payload)
+        state.filteredProducts = state.products
+      })
+      // Update product
+      .addCase(updateProduct.fulfilled, (state, action) => {
+        const index = state.products.findIndex(p => p.id === action.payload.id)
+        if (index >= 0) {
+          state.products[index] = action.payload
+          state.filteredProducts = state.products
+        }
+      })
+      // Delete product
+      .addCase(deleteProduct.fulfilled, (state, action) => {
+        state.products = state.products.filter(p => p.id !== action.payload)
+        state.filteredProducts = state.filteredProducts.filter(p => p.id !== action.payload)
+      })
   },
 })
 

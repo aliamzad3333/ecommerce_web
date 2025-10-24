@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
-import { setUser } from '../store/slices/userSlice'
+import { loginUser } from '../store/slices/userSlice'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -30,42 +30,23 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
     setError('')
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    try {
+      const result = await dispatch(loginUser({
+        email: formData.email,
+        password: formData.password
+      })).unwrap()
 
-    // Simple authentication logic
-    const validCredentials = [
-      { email: 'user@example.com', password: 'password123', name: 'John Doe', isAdmin: false },
-      { email: 'admin@broshop.com', password: 'admin123', name: 'Admin User', isAdmin: true },
-      { email: 'demo@example.com', password: 'demo123', name: 'Demo User', isAdmin: false },
-    ]
-
-    const user = validCredentials.find(
-      cred => cred.email === formData.email && cred.password === formData.password
-    )
-
-    if (user) {
-      dispatch(setUser({
-        id: `user-${Date.now()}`,
-        name: user.name,
-        email: user.email,
-        isAdmin: user.isAdmin,
-      }))
-      
       // Redirect admin users to admin dashboard, others to intended page or home
-      if (user.isAdmin) {
+      if (result.isAdmin) {
         navigate('/admin/dashboard', { replace: true })
       } else {
         navigate(from, { replace: true })
       }
-    } else {
-      setError('Invalid email or password')
+    } catch (error: any) {
+      setError(error || 'Login failed')
     }
-
-    setIsLoading(false)
   }
 
   return (
