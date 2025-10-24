@@ -1,0 +1,87 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests (if you have them)
+      run: npm test --if-present
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-files
+        path: dist/
+        retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-files
+        path: dist/
+        
+    - name: Deploy to server via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          # Create backup of current deployment
+          sudo cp -r /var/www/ecommerce /var/www/ecommerce.backup.$(date +%Y%m%d_%H%M%S) || true
+          
+          # Create deployment directory if it doesn't exist
+          sudo mkdir -p /var/www/ecommerce
+          
+    - name: Copy files to server
+      run: |
+        # Copy built files to server
+        scp -o StrictHostKeyChecking=no -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/ecommerce-build/
+        
+    - name: Finalize deployment
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          # Move files to production directory
+          sudo cp -r /tmp/ecommerce-build/* /var/www/ecommerce/
+          sudo chown -R www-data:www-data /var/www/ecommerce
+          sudo chmod -R 755 /var/www/ecommerce
+          
+          # Restart web server (adjust based on your setup)
+          sudo systemctl reload nginx || sudo systemctl reload apache2 || true
+          
+          # Clean up temporary files
+          rm -rf /tmp/ecommerce-build
+          
+          echo "Deployment completed successfully!"
