@@ -78,6 +78,10 @@ jobs:
         echo "Copying files to server..."
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
         
+        # Also copy to root for direct access
+        echo "Copying files to root directory..."
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/
+        
         # Copy assets to root level so they can be served from /assets/
         echo "Copying assets to root level..."
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
@@ -140,6 +144,15 @@ jobs:
           systemctl reload nginx 2>/dev/null || true
           systemctl reload apache2 2>/dev/null || true
           systemctl reload httpd 2>/dev/null || true
+          
+          # Restart web servers to ensure all changes take effect
+          echo 'Restarting web servers...'
+          systemctl restart nginx 2>/dev/null || true
+          systemctl restart apache2 2>/dev/null || true
+          systemctl restart httpd 2>/dev/null || true
+          
+          # Also restart aaPanel services if available
+          systemctl restart bt 2>/dev/null || true
           
           echo 'Deployment completed successfully!'
           echo 'Your ecommerce app is now live at: http://130.94.40.85/ecommerce/'
