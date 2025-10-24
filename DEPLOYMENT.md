@@ -49,12 +49,12 @@ On your server, ensure you have:
 
 #### 4. Server Directory Setup
 
-The deployment script deploys to `/www/wwwroot/ecommerce/` which is the standard aaPanel directory structure. Your app will be accessible at `http://130.94.40.85/ecommerce/`.
+The deployment script deploys to `~/public_html/ecommerce/` which is the standard cPanel directory structure. Your app will be accessible at `https://yourdomain.com/ecommerce/`.
 
 **Alternative deployment locations:**
-- **Root IP**: Deploy to `/www/wwwroot/default/` (files go directly to http://130.94.40.85/)
-- **Subdirectory**: Deploy to `/www/wwwroot/ecommerce/` (files go to http://130.94.40.85/ecommerce/)
-- **Custom folder**: Deploy to `/www/wwwroot/myapp/` (files go to http://130.94.40.85/myapp/)
+- **Root domain**: Deploy to `~/public_html/` (files go directly to yourdomain.com)
+- **Subdomain**: Deploy to `~/public_html/subdomain/` (files go to subdomain.yourdomain.com)
+- **Subdirectory**: Deploy to `~/public_html/ecommerce/` (files go to yourdomain.com/ecommerce/)
 
 ### Deployment Process
 
@@ -77,14 +77,14 @@ The deployment script deploys to `/www/wwwroot/ecommerce/` which is the standard
 If your server setup is different, modify the deployment script in `.github/workflows/deploy.yml`:
 
 ```yaml
-# For aaPanel deployment (current setup)
-scp -r dist/* user@130.94.40.85:/www/wwwroot/ecommerce/
+# For cPanel deployment (current setup)
+scp -r dist/* user@server:~/public_html/ecommerce/
 
-# For root IP deployment
-scp -r dist/* user@130.94.40.85:/www/wwwroot/default/
+# For root domain deployment
+scp -r dist/* user@server:~/public_html/
 
-# For custom folder deployment
-scp -r dist/* user@130.94.40.85:/www/wwwroot/myapp/
+# For subdomain deployment
+scp -r dist/* user@server:~/public_html/subdomain/
 ```
 
 #### Environment Variables
@@ -110,8 +110,8 @@ If you need environment variables for your build, add them to GitHub Secrets and
 If a deployment fails, you can manually rollback:
 
 ```bash
-# On your server (aaPanel)
-cp -r /www/wwwroot/ecommerce.backup.YYYYMMDD_HHMMSS/* /www/wwwroot/ecommerce/
+# On your server (cPanel)
+cp -r ~/public_html/ecommerce.backup.YYYYMMDD_HHMMSS/* ~/public_html/ecommerce/
 ```
 
 ### Troubleshooting
