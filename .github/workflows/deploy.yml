@@ -55,7 +55,12 @@ jobs:
         
         # Test SSH connection first
         echo "Testing SSH connection..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
+        echo "Host: ${{ secrets.SERVER_HOST }}"
+        echo "User: ${{ secrets.SERVER_USER }}"
+        echo "Password length: ${#SERVER_PASSWORD}"
+        
+        # Test with verbose output
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -v -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
         
         # Create deployment directory and backup using SSH
         echo "Creating backup and deployment directory..."
