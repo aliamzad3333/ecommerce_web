@@ -1,6 +1,20 @@
-# React + TypeScript + Vite
+# E-commerce Web Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern e-commerce application built with React, TypeScript, and Vite.
+
+## Features
+- 🛒 Shopping cart functionality
+- 👤 User authentication
+- 📱 Responsive design
+- 🎨 Modern UI with Tailwind CSS
+- 🚀 Automated deployment with GitHub Actions
+
+## Tech Stack
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- Redux Toolkit
 
 Currently, two official plugins are available:
 
