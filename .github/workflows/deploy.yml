@@ -85,6 +85,11 @@ jobs:
           chmod -R 755 /www/wwwroot
           chmod -R 644 /www/wwwroot/*
           
+          # Ensure www-data can read the files (for Nginx/Apache)
+          chown -R www-data:www-data /www/wwwroot 2>/dev/null || true
+          chown -R nginx:nginx /www/wwwroot 2>/dev/null || true
+          chown -R apache:apache /www/wwwroot 2>/dev/null || true
+          
           # Create .htaccess for Apache fallback
           cat > /www/wwwroot/.htaccess << 'EOF'
           RewriteEngine On
@@ -107,6 +112,18 @@ jobs:
           nginx -s reload 2>/dev/null || true
           systemctl reload nginx 2>/dev/null || true
           systemctl reload apache2 2>/dev/null || true
+          
+          # List files to verify deployment
+          echo 'Files in /www/wwwroot/:'
+          ls -la /www/wwwroot/
+          
+          # Check permissions
+          echo 'Permissions:'
+          ls -la /www/wwwroot/index.html
+          
+          # Test if index.html is readable
+          echo 'Testing index.html access:'
+          head -5 /www/wwwroot/index.html
           
           echo 'Deployment completed successfully!'
           echo 'Your ecommerce app is now live at: http://130.94.40.85/'
