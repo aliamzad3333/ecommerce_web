@@ -66,29 +66,29 @@ jobs:
         echo "Creating backup and deployment directory..."
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           # Create backup of current deployment
-          cp -r /www/wwwroot/ecommerce /www/wwwroot/ecommerce.backup.\$(date +%Y%m%d_%H%M%S) || true
+          cp -r /www/wwwroot /www/wwwroot.backup.\$(date +%Y%m%d_%H%M%S) || true
           
           # Create deployment directory if it doesn't exist
-          mkdir -p /www/wwwroot/ecommerce
+          mkdir -p /www/wwwroot
           
           echo 'Backup and directory creation completed'
         "
         
         # Copy files to server
         echo "Copying files to server..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/ecommerce/
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/
         
         # Set permissions and create config files
         echo "Setting permissions and creating config files..."
         sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           # Set proper permissions for aaPanel
-          chmod -R 755 /www/wwwroot/ecommerce
-          chmod -R 644 /www/wwwroot/ecommerce/*
+          chmod -R 755 /www/wwwroot
+          chmod -R 644 /www/wwwroot/*
           
           # Create .htaccess for Apache fallback
-          cat > /www/wwwroot/ecommerce/.htaccess << 'EOF'
+          cat > /www/wwwroot/.htaccess << 'EOF'
           RewriteEngine On
-          RewriteBase /ecommerce/
+          RewriteBase /
           
           # Handle assets
           RewriteRule ^assets/(.*)$ assets/$1 [L]
@@ -97,11 +97,11 @@ jobs:
           RewriteRule ^index\.html$ - [L]
           RewriteCond %{REQUEST_FILENAME} !-f
           RewriteCond %{REQUEST_FILENAME} !-d
-          RewriteRule . /ecommerce/index.html [L]
+          RewriteRule . /index.html [L]
           EOF
           
           # Set proper permissions for config files
-          chmod 644 /www/wwwroot/ecommerce/.htaccess
+          chmod 644 /www/wwwroot/.htaccess
           
           # Try to reload web server
           nginx -s reload 2>/dev/null || true
@@ -109,5 +109,5 @@ jobs:
           systemctl reload apache2 2>/dev/null || true
           
           echo 'Deployment completed successfully!'
-          echo 'Your ecommerce app is now live at: http://130.94.40.85/ecommerce/'
+          echo 'Your ecommerce app is now live at: http://130.94.40.85/'
         "
