@@ -22,7 +22,7 @@ import AdminMessages from './pages/admin/AdminMessages'
 function App() {
   return (
         <Provider store={store}>
-          <Router basename="/">
+          <Router basename="/ecommerce">
         <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
