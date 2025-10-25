@@ -38,8 +38,6 @@ class ApiClient {
       const response = await fetch(url, config)
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        
         // Handle all errors with simple user-friendly message
         throw new Error('Invalid username and password')
       }

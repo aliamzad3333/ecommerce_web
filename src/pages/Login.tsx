@@ -16,7 +16,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const from = location.state?.from?.pathname || '/'
+  // const from = location.state?.from?.pathname || '/' // Not used since we redirect based on role
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
