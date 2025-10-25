@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://130.94.40.85/api'
+const API_BASE_URL = 'http://localhost:8080/api'
 
 // API Client with JWT token handling
 class ApiClient {
@@ -51,13 +51,23 @@ class ApiClient {
 
   // Authentication APIs
   async login(email: string, password: string) {
-    const response = await this.request<{ token: string; user: any }>('/auth/login', {
+    const response = await this.request<{ token: string; role: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     })
     
     this.setToken(response.token)
-    return response
+    
+    // Transform the response to match expected format
+    return {
+      token: response.token,
+      user: {
+        id: 'temp-id', // You might want to decode this from JWT token
+        email: email,
+        name: email.split('@')[0], // Extract name from email
+        isAdmin: response.role === 'admin'
+      }
+    }
   }
 
   async register(userData: { name: string; email: string; password: string }) {

@@ -39,11 +39,12 @@ const Login = () => {
         password: formData.password
       })).unwrap()
 
-      // Redirect admin users to admin dashboard, others to intended page or home
+      // Redirect based on user role
       if (result.isAdmin) {
         navigate('/admin/dashboard', { replace: true })
       } else {
-        navigate(from, { replace: true })
+        // For regular users, go to landing page
+        navigate('/', { replace: true })
       }
     } catch (error: any) {
       setError(error || 'Login failed')
@@ -222,9 +223,8 @@ const Login = () => {
         <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
           <h3 className="text-sm font-medium text-pink-800 mb-2">Demo Credentials:</h3>
           <div className="text-xs text-pink-700 space-y-1">
-            <p><strong>Regular User:</strong> user@example.com / password123</p>
-            <p><strong>Admin User:</strong> admin@broshop.com / admin123 → <span className="text-pink-600 font-semibold">Goes to Admin Dashboard</span></p>
-            <p><strong>Demo User:</strong> demo@example.com / demo123</p>
+            <p><strong>Admin User:</strong> topu4@yopmail.com / password123 → <span className="text-pink-600 font-semibold">Goes to Admin Dashboard</span></p>
+            <p><strong>Regular User:</strong> user@example.com / password123 → <span className="text-pink-600 font-semibold">Goes to Landing Page</span></p>
           </div>
         </div>
       </div>
