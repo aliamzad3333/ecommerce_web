@@ -84,6 +84,9 @@ jobs:
           # Set proper permissions for aaPanel
           chmod -R 755 /www/wwwroot
           chmod -R 644 /www/wwwroot/*
+          # Fix assets directory permissions specifically
+          chmod -R 755 /www/wwwroot/assets/
+          chmod -R 644 /www/wwwroot/assets/*
           
           # Ensure www-data can read the files (for Nginx/Apache)
           chown -R www-data:www-data /www/wwwroot 2>/dev/null || true
@@ -107,6 +110,72 @@ jobs:
           
           # Set proper permissions for config files
           chmod 644 /www/wwwroot/.htaccess
+          
+          # Remove any conflicting default server block
+          rm -f /www/server/panel/vhost/nginx/0.default.conf
+          
+          # Create/update the ecommerce nginx configuration
+          cat > /www/server/panel/vhost/nginx/ecommerce.conf << 'EOF'
+          server {
+              listen 80 default_server;
+              server_name 130.94.40.85 _;
+              root /www/wwwroot;
+              index index.html index.htm;
+              
+              # API routes - proxy to Go backend
+              location /api/ {
+                  proxy_pass http://127.0.0.1:8080;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  
+                  # CORS headers
+                  add_header Access-Control-Allow-Origin *;
+                  add_header Access-Control-Allow-Methods \"GET, POST, PUT, DELETE, OPTIONS\";
+                  add_header Access-Control-Allow-Headers \"Content-Type, Authorization\";
+                  
+                  # Handle preflight requests
+                  if (\$request_method = 'OPTIONS') {
+                      add_header Access-Control-Allow-Origin *;
+                      add_header Access-Control-Allow-Methods \"GET, POST, PUT, DELETE, OPTIONS\";
+                      add_header Access-Control-Allow-Headers \"Content-Type, Authorization\";
+                      add_header Access-Control-Max-Age 1728000;
+                      add_header Content-Type 'text/plain; charset=utf-8';
+                      add_header Content-Length 0;
+                      return 204;
+                  }
+              }
+              
+              # Health check endpoint
+              location /health {
+                  proxy_pass http://127.0.0.1:8080/health;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+              }
+              
+              # Serve assets directory specifically
+              location /assets/ {
+                  expires 1y;
+                  add_header Cache-Control \"public, immutable\";
+                  add_header Access-Control-Allow-Origin *;
+              }
+              
+              # Serve other static files
+              location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                  expires 1y;
+                  add_header Cache-Control \"public, immutable\";
+                  add_header Access-Control-Allow-Origin *;
+              }
+              
+              # Serve the main app from root
+              location / {
+                  try_files \$uri \$uri/ /index.html;
+              }
+          }
+          EOF
           
           # Create aaPanel website configuration
           echo 'Creating aaPanel website configuration...'
@@ -149,8 +218,8 @@ jobs:
           </VirtualHost>
           EOF
           
-          # Try to reload web server
-          nginx -s reload 2>/dev/null || true
+          # Test nginx configuration and reload
+          nginx -t && nginx -s reload 2>/dev/null || true
           systemctl reload nginx 2>/dev/null || true
           systemctl reload apache2 2>/dev/null || true
           systemctl restart nginx 2>/dev/null || true
