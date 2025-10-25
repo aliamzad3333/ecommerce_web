@@ -47,7 +47,9 @@ const Login = () => {
         navigate('/', { replace: true })
       }
     } catch (error: any) {
-      setError(error || 'Login failed')
+      // Set simple error message
+      const errorMessage = error?.message || 'Invalid username and password'
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -131,7 +133,7 @@ const Login = () => {
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
                 {error}
               </div>
             )}
@@ -225,6 +227,11 @@ const Login = () => {
           <div className="text-xs text-pink-700 space-y-1">
             <p><strong>Admin User:</strong> topu4@yopmail.com / password123 → <span className="text-pink-600 font-semibold">Goes to Admin Dashboard</span></p>
             <p><strong>Regular User:</strong> user@example.com / password123 → <span className="text-pink-600 font-semibold">Goes to Landing Page</span></p>
+          </div>
+          <div className="mt-3 pt-3 border-t border-pink-200">
+            <p className="text-xs text-pink-600">
+              💡 <strong>Having trouble?</strong> Make sure your Go backend is running on localhost:8080
+            </p>
           </div>
         </div>
       </div>

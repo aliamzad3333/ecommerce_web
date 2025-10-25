@@ -39,13 +39,17 @@ class ApiClient {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
+        
+        // Handle all errors with simple user-friendly message
+        throw new Error('Invalid username and password')
       }
 
       return await response.json()
     } catch (error) {
       console.error('API request failed:', error)
-      throw error
+      
+      // Handle all errors with simple user-friendly message
+      throw new Error('Invalid username and password')
     }
   }
 
