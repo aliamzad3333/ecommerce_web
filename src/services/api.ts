@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://130.94.40.85:8080/api'
+import { ENV } from '../config/environment'
 
 // API Client with JWT token handling
 class ApiClient {
@@ -157,5 +157,5 @@ class ApiClient {
 }
 
 // Export singleton instance
-export const apiClient = new ApiClient(API_BASE_URL)
+export const apiClient = new ApiClient(ENV.API_BASE_URL)
 export default apiClient
