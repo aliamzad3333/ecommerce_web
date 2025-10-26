@@ -48,23 +48,27 @@ jobs:
         name: build-files
         path: dist/
         
-    - name: Deploy using rsync
+    - name: Deploy using SSH key
       run: |
-        # Install sshpass for password authentication
-        sudo apt-get update && sudo apt-get install -y sshpass
+        # Setup SSH key authentication
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/github_actions
+        chmod 600 ~/.ssh/github_actions
+        
+        # Add server to known hosts
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
         
         # Test SSH connection first
         echo "Testing SSH connection..."
         echo "Host: ${{ secrets.SERVER_HOST }}"
         echo "User: ${{ secrets.SERVER_USER }}"
-        echo "Password length: ${#SERVER_PASSWORD}"
         
-        # Test with password authentication only (disable public key auth)
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
+        # Test SSH key authentication
+        ssh -i ~/.ssh/github_actions -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
         
         # Create deployment directory and backup using SSH
         echo "Creating backup and deployment directory..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+        ssh -i ~/.ssh/github_actions -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           # Create backup of current deployment
           cp -r /www/wwwroot /www/wwwroot.backup.\$(date +%Y%m%d_%H%M%S) || true
           
@@ -76,11 +80,11 @@ jobs:
         
         # Copy files to server
         echo "Copying files to server..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/
+        scp -i ~/.ssh/github_actions -o StrictHostKeyChecking=no -o ConnectTimeout=10 -r dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/
         
         # Set permissions and create config files
         echo "Setting permissions and creating config files..."
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o PreferredAuthentications=password -o PubkeyAuthentication=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
+        ssh -i ~/.ssh/github_actions -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "
           # Set proper permissions for aaPanel
           chmod -R 755 /www/wwwroot
           chmod -R 644 /www/wwwroot/*
