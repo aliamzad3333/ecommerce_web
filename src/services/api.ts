@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080/api'
+const API_BASE_URL = 'http://130.94.40.85:8080/api'
 
 // API Client with JWT token handling
 class ApiClient {
