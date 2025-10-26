@@ -229,7 +229,10 @@ const Login = () => {
           </div>
           <div className="mt-3 pt-3 border-t border-pink-200">
             <p className="text-xs text-pink-600">
-              💡 <strong>Having trouble?</strong> Make sure your Go backend is running on localhost:8080
+              💡 <strong>Environment:</strong> Automatically detects local vs server backend
+            </p>
+            <p className="text-xs text-pink-600">
+              🏠 <strong>Local:</strong> localhost:8080 | 🚀 <strong>Server:</strong> 130.94.40.85:8080
             </p>
           </div>
         </div>
