@@ -90,32 +90,57 @@ class ApiClient {
     return this.request<any>('/profile')
   }
 
-  // Product APIs
-  async getProducts() {
-    return this.request<any[]>('/products')
+  // Product APIs - Public
+  async getProducts(params?: { category?: string; page?: number; limit?: number }) {
+    const queryParams = new URLSearchParams()
+    if (params?.category) queryParams.append('category', params.category)
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    
+    const query = queryParams.toString()
+    return this.request<any[]>(`/products${query ? `?${query}` : ''}`)
   }
 
   async getProduct(id: string) {
     return this.request<any>(`/products/${id}`)
   }
 
+  async getProductCategories() {
+    return this.request<string[]>('/products/categories')
+  }
+
+  // Product APIs - Admin Only
   async createProduct(productData: any) {
-    return this.request<any>('/products', {
+    return this.request<any>('/admin/products', {
       method: 'POST',
       body: JSON.stringify(productData),
     })
   }
 
   async updateProduct(id: string, productData: any) {
-    return this.request<any>(`/products/${id}`, {
+    return this.request<any>(`/admin/products/${id}`, {
       method: 'PUT',
       body: JSON.stringify(productData),
     })
   }
 
   async deleteProduct(id: string) {
-    return this.request<void>(`/products/${id}`, {
+    return this.request<void>(`/admin/products/${id}`, {
       method: 'DELETE',
+    })
+  }
+
+  async uploadProductImage(id: string, imageFile: File) {
+    const formData = new FormData()
+    formData.append('image', imageFile)
+    
+    return this.request<{ imageUrl: string }>(`/admin/products/${id}/image`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        // Remove Content-Type to let browser set it with boundary for FormData
+        ...(this.token && { Authorization: `Bearer ${this.token}` }),
+      },
     })
   }
 
@@ -133,6 +158,11 @@ class ApiClient {
 
   async getOrder(id: string) {
     return this.request<any>(`/orders/${id}`)
+  }
+
+  // Health Check
+  async healthCheck() {
+    return this.request<{ status: string; message: string }>('/health')
   }
 
   // Admin APIs

@@ -12,9 +12,8 @@ const getEnvironmentConfig = (): EnvironmentConfig => {
   const isProduction = hostname === '130.94.40.85'
   
   return {
-    API_BASE_URL: isLocalhost 
-      ? 'http://localhost:8080/api' 
-      : 'http://130.94.40.85/api',  // Use same domain, Nginx will proxy to Go backend
+    // Always use relative base; dev server/nginx will proxy /api to backend
+    API_BASE_URL: '/api',
     IS_DEVELOPMENT: isLocalhost,
     IS_PRODUCTION: isProduction,
     HOSTNAME: hostname

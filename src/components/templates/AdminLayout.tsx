@@ -45,8 +45,8 @@ const AdminLayout = () => {
         </div>
       )}
 
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col ${
+      {/* Sidebar - always overlay */}
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out flex flex-col ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Header */}
@@ -118,35 +118,36 @@ const AdminLayout = () => {
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Top bar */}
-        <div className="sticky top-0 z-10 bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
-            
-            <div className="flex items-center space-x-4">
-              <h1 className="text-lg font-semibold text-gray-900">
-                {navigation.find(item => isCurrentPath(item.href))?.name || 'Admin Panel'}
-              </h1>
-            </div>
+      {/* Main content - full width, starts from top */}
+      <div className="min-h-screen">
+        {/* Page content - starts from very top */}
+        <main className="flex-1 min-h-screen">
+          <div className="w-full max-w-full">
+            {/* Top header at very top */}
+            <div className="flex items-center justify-between mb-6 bg-white shadow-sm p-4 border-b border-gray-200">
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="p-2 text-gray-400 hover:text-gray-600"
+                >
+                  <Bars3Icon className="h-6 w-6" />
+                </button>
+                <h1 className="text-xl font-bold text-gray-900">
+                  {navigation.find(item => isCurrentPath(item.href))?.name || 'Admin Panel'}
+                </h1>
+              </div>
 
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-500">
-                Welcome back, {currentUser?.name}
+              <div className="flex items-center space-x-4">
+                <div className="text-sm text-gray-500">
+                  Welcome back, {currentUser?.name}
+                </div>
               </div>
             </div>
+            
+            <div className="p-4 sm:p-6 lg:p-8">
+              <Outlet />
+            </div>
           </div>
-        </div>
-
-        {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">
-          <Outlet />
         </main>
       </div>
     </div>

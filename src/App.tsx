@@ -16,7 +16,7 @@ import Register from './pages/Register'
 import AdminLogin from './pages/admin/AdminLogin'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminOrdersEnhanced from './pages/admin/AdminOrdersEnhanced'
-import AdminProductsEnhanced from './pages/admin/AdminProductsEnhanced'
+import AdminProducts from './pages/admin/AdminProducts'
 import AdminMessages from './pages/admin/AdminMessages'
 
 function App() {
@@ -60,7 +60,7 @@ function App() {
           }>
             <Route index element={<AdminDashboard />} />
             <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="products" element={<AdminProductsEnhanced />} />
+            <Route path="products" element={<AdminProducts />} />
             <Route path="orders" element={<AdminOrdersEnhanced />} />
             <Route path="messages" element={<AdminMessages />} />
           </Route>
