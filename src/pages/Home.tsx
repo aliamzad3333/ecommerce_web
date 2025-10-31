@@ -4,25 +4,42 @@ import { useSearchParams } from 'react-router-dom'
 import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline'
 import ProductCard from '../components/molecules/ProductCard'
 import type { RootState } from '../store/store'
-import { setSearchQuery, setCategory } from '../store/slices/productSlice'
+import { setSearchQuery, setCategory, fetchProducts } from '../store/slices/productSlice'
+import { apiClient } from '../services/api'
 
 const Home = () => {
   const dispatch = useDispatch()
   const [searchParams] = useSearchParams()
   const [showFilters, setShowFilters] = useState(false)
   
-  const { filteredProducts, searchQuery, selectedCategory, loading } = useSelector(
+  const { filteredProducts, searchQuery, selectedCategory, loading, error } = useSelector(
     (state: RootState) => state.products
   )
 
-  const categories = ['All', 'Electronics', 'Clothing', 'Accessories']
+  const [categories, setCategories] = useState(['All', 'Electronics', 'Clothing', 'Accessories'])
 
   useEffect(() => {
+    // Load products when component mounts
+    dispatch(fetchProducts() as any)
+    
+    // Load categories from API
+    loadCategories()
+    
     const search = searchParams.get('search')
     if (search) {
       dispatch(setSearchQuery(search))
     }
   }, [searchParams, dispatch])
+
+  const loadCategories = async () => {
+    try {
+      const categoriesData = await apiClient.getProductCategories()
+      setCategories(['All', ...categoriesData])
+    } catch (err) {
+      console.error('Error loading categories:', err)
+      // Keep fallback categories
+    }
+  }
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setSearchQuery(e.target.value))
@@ -34,6 +51,19 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-red-700">
+                Failed to load products: {error}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

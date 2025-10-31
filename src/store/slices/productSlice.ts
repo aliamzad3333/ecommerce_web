@@ -34,8 +34,27 @@ export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
   async (_, { rejectWithValue }) => {
     try {
-      const products = await apiClient.getProducts()
-      return products
+      const response: any = await apiClient.getProducts()
+      console.log('API Response:', response)
+      // Handle different response formats
+      const items = Array.isArray(response) ? response : (Array.isArray(response?.products) ? response.products : [])
+      console.log('Items after processing:', items)
+      // Normalize API response to frontend format
+      const normalized = items.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        image: p.image_url || '', // Map image_url to image
+        description: p.description || '',
+        category: p.category,
+        inStock: typeof p.inStock === 'boolean' ? p.inStock : p.in_stock,
+        rating: p.rating || 0,
+        reviews: p.reviews || 0,
+        specifications: p.specification || '',
+        material: p.material || ''
+      }))
+      console.log('Normalized products:', normalized)
+      return normalized
     } catch (error: any) {
       return rejectWithValue(error.message)
     }
@@ -46,8 +65,22 @@ export const fetchProduct = createAsyncThunk(
   'products/fetchProduct',
   async (id: string, { rejectWithValue }) => {
     try {
-      const product = await apiClient.getProduct(id)
-      return product
+      const response = await apiClient.getProduct(id)
+      const p = response.product || response
+      // Normalize API response to frontend format
+      return {
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        image: p.image_url || '',
+        description: p.description || '',
+        category: p.category,
+        inStock: typeof p.inStock === 'boolean' ? p.inStock : p.in_stock,
+        rating: p.rating || 0,
+        reviews: p.reviews || 0,
+        specifications: p.specification || '',
+        material: p.material || ''
+      }
     } catch (error: any) {
       return rejectWithValue(error.message)
     }

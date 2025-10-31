@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState } from '../store/store'
 import { logout } from '../store/slices/userSlice'
+import { fetchProducts } from '../store/slices/productSlice'
 import { 
   ShoppingCartIcon, 
   MagnifyingGlassIcon,
@@ -22,6 +23,11 @@ const LandingPage = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { currentUser, isAuthenticated } = useSelector((state: RootState) => state.user)
+  const { products, loading, error } = useSelector((state: RootState) => state.products)
+
+  useEffect(() => {
+    dispatch(fetchProducts() as any)
+  }, [dispatch])
 
   const handleLogout = () => {
     dispatch(logout())
@@ -38,74 +44,15 @@ const LandingPage = () => {
     setLikedItems(newLikedItems)
   }
 
-  const babyProducts = [
-    {
-      id: '1',
-      name: 'Organic Baby Formula',
-      image: '/api/placeholder/300/300',
-      originalPrice: 45.99,
-      price: 38.99,
-      discount: 15,
-      inStock: true,
-      rating: 4.8,
-      reviews: 124,
-      category: 'Feeding'
-    },
-    {
-      id: '2',
-      name: 'Soft Baby Blanket',
-      image: '/api/placeholder/300/300',
-      originalPrice: 25.99,
-      price: 25.99,
-      discount: 0,
-      inStock: true,
-      rating: 4.9,
-      reviews: 89,
-      category: 'Sleep'
-    },
-    {
-      id: '3',
-      name: 'Baby Diapers Pack',
-      image: '/api/placeholder/300/300',
-      originalPrice: 35.99,
-      price: 35.99,
-      discount: 0,
-      inStock: false,
-      rating: 4.7,
-      reviews: 156,
-      category: 'Hygiene'
-    },
-    {
-      id: '4',
-      name: 'Baby Stroller',
-      image: '/api/placeholder/300/300',
-      originalPrice: 199.99,
-      price: 129.99,
-      discount: 35,
-      inStock: true,
-      rating: 4.6,
-      reviews: 78,
-      category: 'Transport'
-    },
-    {
-      id: '5',
-      name: 'Baby Toys Set',
-      image: '/api/placeholder/300/300',
-      originalPrice: 49.99,
-      price: 19.99,
-      discount: 60,
-      inStock: true,
-      rating: 4.5,
-      reviews: 203,
-      category: 'Toys'
-    }
-  ]
+  const babyProducts = products.length > 0 ? products : []
 
   const nextSlide = () => {
+    if (babyProducts.length === 0) return
     setCurrentSlide((prev) => (prev + 1) % babyProducts.length)
   }
 
   const prevSlide = () => {
+    if (babyProducts.length === 0) return
     setCurrentSlide((prev) => (prev - 1 + babyProducts.length) % babyProducts.length)
   }
 
@@ -226,7 +173,7 @@ const LandingPage = () => {
                 className="flex transition-transform duration-500 ease-in-out"
                 style={{ transform: `translateX(-${currentSlide * 100}%)` }}
               >
-                {babyProducts.map((product) => (
+                {babyProducts.length > 0 ? babyProducts.map((product) => (
                   <div key={product.id} className="w-full flex-shrink-0">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[400px]">
                       <div className="space-y-6 p-8">
@@ -259,7 +206,39 @@ const LandingPage = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <div className="w-full flex-shrink-0">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[400px]">
+                      <div className="space-y-6 p-8">
+                        <div className="space-y-2">
+                          <span className="text-4xl font-bold text-pink-600">100%</span>
+                          <span className="text-5xl font-bold text-purple-600">Safe</span>
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-2xl font-semibold text-green-600">Quality & Care</p>
+                          <p className="text-xl text-green-600">Guaranteed! Happy Baby.</p>
+                        </div>
+                        <p className="text-gray-600 text-lg">
+                          Discover the finest collection of baby products, carefully selected for your little one's comfort and safety.
+                        </p>
+                        <Link
+                          to="/shop"
+                          className="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
+                        >
+                          SHOP NOW
+                        </Link>
+                      </div>
+                      <div className="relative">
+                        <div className="w-full h-96 bg-gradient-to-br from-pink-200 to-purple-200 rounded-2xl flex items-center justify-center">
+                          <div className="text-8xl">🧸</div>
+                        </div>
+                        <div className="absolute -top-4 -left-4 w-8 h-8 bg-yellow-300 rounded-full"></div>
+                        <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-pink-300 rounded-full"></div>
+                        <div className="absolute top-1/2 -right-8 w-6 h-6 bg-purple-300 rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -301,20 +280,47 @@ const LandingPage = () => {
             <p className="text-gray-600 text-lg">Carefully selected items for your little one</p>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600"></div>
+              <p className="mt-4 text-gray-600">Loading products...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="text-center py-12">
+              <p className="text-red-600 mb-4">Error loading products: {error}</p>
+              <button
+                onClick={() => dispatch(fetchProducts() as any)}
+                className="bg-pink-600 text-white px-6 py-2 rounded-lg hover:bg-pink-700"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           {/* Products Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {babyProducts.map((product) => (
+          {!loading && !error && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              {babyProducts.map((product) => (
               <div key={product.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300">
                 {/* Product Image */}
                 <div className="relative">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-48 object-cover"
-                  />
-                  {product.discount > 0 && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm font-semibold">
-                      {product.discount}% OFF
+                  {product.image ? (
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-48 object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5YTliYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-pink-200 to-purple-200 flex items-center justify-center">
+                      <span className="text-6xl">🧸</span>
                     </div>
                   )}
                   <button
@@ -336,20 +342,13 @@ const LandingPage = () => {
                 <div className="p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
                   <div className="flex items-center space-x-1 mb-3">
-                    {renderStars(product.rating)}
-                    <span className="text-sm text-gray-600">({product.reviews})</span>
+                    {renderStars(product.rating || 0)}
+                    <span className="text-sm text-gray-600">({product.reviews || 0})</span>
                   </div>
                   
                   {/* Price */}
                   <div className="mb-4">
-                    {product.originalPrice > product.price ? (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xl font-bold text-gray-900">${product.price}</span>
-                        <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
-                      </div>
-                    ) : (
-                      <span className="text-xl font-bold text-gray-900">${product.price}</span>
-                    )}
+                    <span className="text-xl font-bold text-gray-900">${product.price}</span>
                   </div>
 
                   {/* Add to Cart Button */}
@@ -365,7 +364,8 @@ const LandingPage = () => {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
