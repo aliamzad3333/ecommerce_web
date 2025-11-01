@@ -8,7 +8,8 @@ import {
   ShoppingBagIcon,
   ChatBubbleLeftRightIcon,
   ArrowRightOnRectangleIcon,
-  HomeIcon
+  HomeIcon,
+  PhotoIcon
 } from '@heroicons/react/24/outline'
 import type { RootState } from '../../store/store'
 import { logout } from '../../store/slices/userSlice'
@@ -30,6 +31,7 @@ const AdminLayout = () => {
     { name: 'Manage Products', href: '/admin/products', icon: CubeIcon },
     { name: 'Orders', href: '/admin/orders', icon: ShoppingBagIcon },
     { name: 'Messages', href: '/admin/messages', icon: ChatBubbleLeftRightIcon },
+    { name: 'Slider Settings', href: '/admin/slider', icon: PhotoIcon },
   ]
 
   const isCurrentPath = (path: string) => {

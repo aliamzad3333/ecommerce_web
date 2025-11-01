@@ -32,9 +32,9 @@ interface ProductState {
 // Async thunks for API calls
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
-  async (_, { rejectWithValue }) => {
+  async (params?: { category?: string; in_stock?: boolean; search?: string; page?: number; limit?: number }, { rejectWithValue }) => {
     try {
-      const response: any = await apiClient.getProducts()
+      const response: any = await apiClient.getProducts(params)
       console.log('API Response:', response)
       // Handle different response formats
       const items = Array.isArray(response) ? response : (Array.isArray(response?.products) ? response.products : [])

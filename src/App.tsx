@@ -18,6 +18,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminOrdersEnhanced from './pages/admin/AdminOrdersEnhanced'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminMessages from './pages/admin/AdminMessages'
+import AdminSliderSettings from './pages/admin/AdminSliderSettings'
 
 function App() {
   return (
@@ -63,6 +64,7 @@ function App() {
             <Route path="products" element={<AdminProducts />} />
             <Route path="orders" element={<AdminOrdersEnhanced />} />
             <Route path="messages" element={<AdminMessages />} />
+            <Route path="slider" element={<AdminSliderSettings />} />
           </Route>
         </Routes>
       </Router>
