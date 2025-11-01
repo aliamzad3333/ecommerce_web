@@ -91,14 +91,22 @@ class ApiClient {
   }
 
   // Product APIs - Public
-  async getProducts(params?: { category?: string; page?: number; limit?: number }) {
+  async getProducts(params?: { 
+    category?: string; 
+    page?: number; 
+    limit?: number; 
+    in_stock?: boolean;
+    search?: string;
+  }) {
     const queryParams = new URLSearchParams()
     if (params?.category) queryParams.append('category', params.category)
     if (params?.page) queryParams.append('page', params.page.toString())
     if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.in_stock !== undefined) queryParams.append('in_stock', params.in_stock.toString())
+    if (params?.search) queryParams.append('search', params.search)
     
     const query = queryParams.toString()
-    return this.request<any[]>(`/products${query ? `?${query}` : ''}`)
+    return this.request<any>(`/products${query ? `?${query}` : ''}`)
   }
 
   async getProduct(id: string) {
@@ -107,6 +115,95 @@ class ApiClient {
 
   async getProductCategories() {
     return this.request<string[]>('/products/categories')
+  }
+
+  // Slider APIs - Public
+  async getSliderData() {
+    return this.request<{
+      slides: Array<{
+        id: string;
+        image_url: string;
+        order: number;
+        created_at: string;
+        updated_at: string;
+      }>;
+      settings: {
+        slide_duration: number; // Duration in seconds
+        auto_play: boolean;
+        show_indicators: boolean;
+        show_controls: boolean;
+        updated_at: string;
+      };
+      total_slides: number;
+    }>('/sliders')
+  }
+
+  // Slider APIs - Admin Only
+  async getAdminSliders() {
+    return this.request<{
+      sliders: Array<{
+        id: string;
+        image_url: string;
+        order: number;
+        created_at: string;
+        updated_at: string;
+      }>;
+      total_slides: number;
+    }>('/admin/sliders')
+  }
+
+  async getSliderSettings() {
+    return this.request<{
+      slide_duration: number;
+      auto_play: boolean;
+      show_indicators: boolean;
+      show_controls: boolean;
+      updated_at: string;
+    }>('/admin/slider-settings')
+  }
+
+  async updateSliderSettings(data: {
+    slide_duration?: number;
+    auto_play?: boolean;
+    show_indicators?: boolean;
+    show_controls?: boolean;
+  }) {
+    return this.request<any>('/admin/slider-settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async uploadSliderImage(imageFile: File) {
+    const formData = new FormData()
+    formData.append('image', imageFile)
+    
+    const url = `${this.baseURL}/admin/sliders/image`
+    const config: RequestInit = {
+      method: 'POST',
+      headers: {
+        // Remove Content-Type to let browser set it with boundary for FormData
+        ...(this.token && { Authorization: `Bearer ${this.token}` }),
+      },
+      body: formData,
+    }
+
+    try {
+      const response = await fetch(url, config)
+      if (!response.ok) {
+        throw new Error('Failed to upload image')
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Image upload failed:', error)
+      throw new Error('Failed to upload image')
+    }
+  }
+
+  async deleteSlider(id: string) {
+    return this.request<any>(`/admin/sliders/${id}`, {
+      method: 'DELETE',
+    })
   }
 
   // Product APIs - Admin Only

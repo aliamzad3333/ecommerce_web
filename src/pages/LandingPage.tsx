@@ -1,69 +1,141 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import type { RootState } from '../store/store'
 import { logout } from '../store/slices/userSlice'
 import { fetchProducts } from '../store/slices/productSlice'
+import apiClient from '../services/api'
 import { 
   ShoppingCartIcon, 
   MagnifyingGlassIcon,
   TruckIcon,
   ShieldCheckIcon,
-  TagIcon,
-  HeartIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
+  TagIcon
 } from '@heroicons/react/24/outline'
-import { HeartIcon as HeartSolidIcon, StarIcon as StarSolidIcon } from '@heroicons/react/24/solid'
 import { UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 
 const LandingPage = () => {
   const [currentSlide, setCurrentSlide] = useState(0)
-  const [likedItems, setLikedItems] = useState<Set<string>>(new Set())
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [allProducts, setAllProducts] = useState<any[]>([])
+  const [sliderData, setSliderData] = useState<{
+    slides: Array<{
+      id: string;
+      image_url: string;
+      order: number;
+    }>;
+    settings: {
+      slide_duration: number;
+      auto_play: boolean;
+      show_indicators: boolean;
+      show_controls: boolean;
+    };
+  } | null>(null)
+  const [sliderLoading, setSliderLoading] = useState(true)
+  const searchRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { currentUser, isAuthenticated } = useSelector((state: RootState) => state.user)
   const { products, loading, error } = useSelector((state: RootState) => state.products)
 
+  // Handle click outside to close search
   useEffect(() => {
-    dispatch(fetchProducts() as any)
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        if (!searchTerm) {
+          setIsSearchOpen(false)
+        }
+      }
+    }
+
+    if (isSearchOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isSearchOpen, searchTerm])
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // Fetch slider data from API
+  useEffect(() => {
+    const loadSliderData = async () => {
+      try {
+        setSliderLoading(true)
+        const data = await apiClient.getSliderData()
+        
+        // Slides are already sorted by order from API
+        setSliderData(data)
+      } catch (error) {
+        console.error('Failed to load slider data:', error)
+        // Fallback to null if API fails
+        setSliderData(null)
+      } finally {
+        setSliderLoading(false)
+      }
+    }
+
+    loadSliderData()
+  }, [])
+
+  // Reset slide index when slides change
+  useEffect(() => {
+    if (sliderData && sliderData.slides.length > 0) {
+      setCurrentSlide(0)
+    }
+  }, [sliderData?.slides.length])
+
+  // Auto-advance slides based on duration from API (convert seconds to milliseconds)
+  useEffect(() => {
+    if (!sliderData || !sliderData.settings.auto_play || sliderData.slides.length === 0) return
+
+    const durationMs = sliderData.settings.slide_duration * 1000
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliderData.slides.length)
+    }, durationMs)
+
+    return () => clearInterval(interval)
+  }, [sliderData?.slides.length, sliderData?.settings.auto_play, sliderData?.settings.slide_duration])
+
+  // Fetch all products once on mount
+  useEffect(() => {
+    const filters: any = {
+      limit: 100,
+      page: 1
+    }
+    dispatch(fetchProducts(filters) as any)
   }, [dispatch])
+
+  // Store all products when fetched
+  useEffect(() => {
+    if (products.length > 0 && allProducts.length === 0) {
+      setAllProducts(products)
+    }
+  }, [products, allProducts.length])
+
+  // Filter products client-side based on search
+  const filteredProducts = debouncedSearchTerm.trim()
+    ? (allProducts.length > 0 ? allProducts : products).filter((product) =>
+        product.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase().trim())
+      )
+    : (allProducts.length > 0 ? allProducts : products)
 
   const handleLogout = () => {
     dispatch(logout())
     navigate('/')
   }
 
-  const toggleLike = (itemId: string) => {
-    const newLikedItems = new Set(likedItems)
-    if (newLikedItems.has(itemId)) {
-      newLikedItems.delete(itemId)
-    } else {
-      newLikedItems.add(itemId)
-    }
-    setLikedItems(newLikedItems)
-  }
-
-  const babyProducts = products.length > 0 ? products : []
-
-  const nextSlide = () => {
-    if (babyProducts.length === 0) return
-    setCurrentSlide((prev) => (prev + 1) % babyProducts.length)
-  }
-
-  const prevSlide = () => {
-    if (babyProducts.length === 0) return
-    setCurrentSlide((prev) => (prev - 1 + babyProducts.length) % babyProducts.length)
-  }
-
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <StarSolidIcon
-        key={i}
-        className={`h-4 w-4 ${i < Math.floor(rating) ? 'text-yellow-400' : 'text-gray-300'}`}
-      />
-    ))
-  }
+  const babyProducts = filteredProducts.length > 0 ? filteredProducts : []
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -74,28 +146,66 @@ const LandingPage = () => {
             {/* Logo */}
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-2xl">👶</span>
+                <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="url(#gradient)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="url(#gradientFill)"/>
+                  <path d="M9 22V12H15V22" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor:"#ec4899", stopOpacity:1}} />
+                      <stop offset="100%" style={{stopColor:"#9333ea", stopOpacity:1}} />
+                    </linearGradient>
+                    <linearGradient id="gradientFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor:"#fce7f3", stopOpacity:0.3}} />
+                      <stop offset="100%" style={{stopColor:"#f3e8ff", stopOpacity:0.3}} />
+                    </linearGradient>
+                  </defs>
+                </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold">BABYSHOP</h1>
-                <p className="text-sm text-pink-100">BABY & KIDS STORE</p>
+                <h1 className="text-2xl font-bold">BRO SHOP BD</h1>
+                <p className="text-sm text-pink-100">Buy It</p>
               </div>
             </div>
 
-            {/* Search */}
-            <div className="flex-1 max-w-md mx-8">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search baby products..."
-                  className="w-full pl-10 pr-4 py-2 rounded-lg text-gray-900 focus:ring-2 focus:ring-white focus:outline-none"
-                />
-                <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-              </div>
-            </div>
-
-            {/* Cart and User */}
+            {/* Search, Cart and User */}
             <div className="flex items-center space-x-4">
+              {/* Search */}
+              <div className="relative flex items-center" ref={searchRef}>
+                {!isSearchOpen && !searchTerm ? (
+                  <button
+                    onClick={() => setIsSearchOpen(true)}
+                    className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                    aria-label="Search"
+                  >
+                    <MagnifyingGlassIcon className="h-6 w-6" />
+                  </button>
+                ) : (
+                  <div className="bg-white rounded-lg shadow-xl p-2 min-w-[250px] md:min-w-[300px] max-w-[400px]">
+                    <div className="relative flex items-center">
+                      <MagnifyingGlassIcon className="absolute left-3 h-5 w-5 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search products by name..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        autoFocus={isSearchOpen}
+                        className="w-full pl-10 pr-10 py-2 rounded-lg text-gray-900 border border-purple-200 focus:ring-2 focus:ring-pink-500 focus:outline-none"
+                      />
+                      {searchTerm && (
+                        <button
+                          onClick={() => {
+                            setSearchTerm('')
+                            setIsSearchOpen(false)
+                          }}
+                          className="absolute right-3 text-gray-400 hover:text-gray-600"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="flex items-center space-x-2">
                 <div className="relative">
                   <ShoppingCartIcon className="h-8 w-8" />
@@ -135,139 +245,49 @@ const LandingPage = () => {
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8 py-4">
-            <Link to="/" className="text-pink-600 font-semibold border-b-2 border-pink-600 pb-1">
-              Home
-            </Link>
-            <Link to="/about" className="text-gray-700 hover:text-pink-600 transition-colors">
-              About Us
-            </Link>
-            <Link to="/products" className="text-gray-700 hover:text-pink-600 transition-colors">
-              Baby Products
-            </Link>
-            <Link to="/shop" className="text-gray-700 hover:text-pink-600 transition-colors">
-              Shop
-            </Link>
-            <Link to="/blog" className="text-gray-700 hover:text-pink-600 transition-colors">
-              Blog
-            </Link>
-            <Link to="/faq" className="text-gray-700 hover:text-pink-600 transition-colors">
-              FAQ
-            </Link>
-            <Link to="/contact" className="text-gray-700 hover:text-pink-600 transition-colors">
-              Contact
-            </Link>
-          </nav>
-        </div>
-      </div>
 
       {/* Hero Slider */}
-      <div className="relative bg-gradient-to-r from-pink-100 to-purple-100 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative">
-            <div className="overflow-hidden rounded-2xl">
-              <div 
-                className="flex transition-transform duration-500 ease-in-out"
-                style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-              >
-                {babyProducts.length > 0 ? babyProducts.map((product) => (
-                  <div key={product.id} className="w-full flex-shrink-0">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[400px]">
-                      <div className="space-y-6 p-8">
-                        <div className="space-y-2">
-                          <span className="text-4xl font-bold text-pink-600">100%</span>
-                          <span className="text-5xl font-bold text-purple-600">Safe</span>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-2xl font-semibold text-green-600">Quality & Care</p>
-                          <p className="text-xl text-green-600">Guaranteed! Happy Baby.</p>
-                        </div>
-                        <p className="text-gray-600 text-lg">
-                          Discover the finest collection of baby products, carefully selected for your little one's comfort and safety.
-                        </p>
-                        <Link
-                          to="/shop"
-                          className="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
-                        >
-                          SHOP NOW
-                        </Link>
-                      </div>
-                      <div className="relative">
-                        <div className="w-full h-96 bg-gradient-to-br from-pink-200 to-purple-200 rounded-2xl flex items-center justify-center">
-                          <div className="text-8xl">🧸</div>
-                        </div>
-                        {/* Decorative elements */}
-                        <div className="absolute -top-4 -left-4 w-8 h-8 bg-yellow-300 rounded-full"></div>
-                        <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-pink-300 rounded-full"></div>
-                        <div className="absolute top-1/2 -right-8 w-6 h-6 bg-purple-300 rounded-full"></div>
-                      </div>
+      <div className="relative w-full">
+        <div className="relative w-full">
+          <div className="overflow-hidden w-full">
+            <div 
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {sliderLoading ? (
+                <div className="w-full flex-shrink-0">
+                  <div className="relative w-full h-[400px] md:h-[500px]">
+                    <div className="w-full h-full bg-gradient-to-br from-pink-200 to-purple-200 flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600"></div>
                     </div>
                   </div>
-                )) : (
-                  <div className="w-full flex-shrink-0">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[400px]">
-                      <div className="space-y-6 p-8">
-                        <div className="space-y-2">
-                          <span className="text-4xl font-bold text-pink-600">100%</span>
-                          <span className="text-5xl font-bold text-purple-600">Safe</span>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-2xl font-semibold text-green-600">Quality & Care</p>
-                          <p className="text-xl text-green-600">Guaranteed! Happy Baby.</p>
-                        </div>
-                        <p className="text-gray-600 text-lg">
-                          Discover the finest collection of baby products, carefully selected for your little one's comfort and safety.
-                        </p>
-                        <Link
-                          to="/shop"
-                          className="inline-block bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-pink-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
-                        >
-                          SHOP NOW
-                        </Link>
-                      </div>
-                      <div className="relative">
-                        <div className="w-full h-96 bg-gradient-to-br from-pink-200 to-purple-200 rounded-2xl flex items-center justify-center">
-                          <div className="text-8xl">🧸</div>
-                        </div>
-                        <div className="absolute -top-4 -left-4 w-8 h-8 bg-yellow-300 rounded-full"></div>
-                        <div className="absolute -bottom-4 -right-4 w-12 h-12 bg-pink-300 rounded-full"></div>
-                        <div className="absolute top-1/2 -right-8 w-6 h-6 bg-purple-300 rounded-full"></div>
-                      </div>
+                </div>
+              ) : sliderData && sliderData.slides.length > 0 ? (
+                sliderData.slides.map((slide) => (
+                  <div key={slide.id} className="w-full flex-shrink-0">
+                    <div className="relative w-full h-[400px] md:h-[500px]">
+                      <img
+                        src={slide.image_url}
+                        alt={`Slide ${slide.order}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5YTliYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='
+                        }}
+                      />
                     </div>
                   </div>
-                )}
-              </div>
+                ))
+              ) : (
+                <div className="w-full flex-shrink-0">
+                  <div className="relative w-full h-[400px] md:h-[500px]">
+                    <div className="w-full h-full bg-gradient-to-br from-pink-200 to-purple-200 flex items-center justify-center">
+                      <div className="text-8xl">🧸</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {/* Navigation Arrows */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              <ChevronLeftIcon className="h-6 w-6 text-gray-600" />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-200"
-            >
-              <ChevronRightIcon className="h-6 w-6 text-gray-600" />
-            </button>
-          </div>
-
-          {/* Dots Indicator */}
-          <div className="flex justify-center mt-6 space-x-2">
-            {babyProducts.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                  index === currentSlide ? 'bg-pink-500' : 'bg-gray-300'
-                }`}
-              />
-            ))}
           </div>
         </div>
       </div>
@@ -275,9 +295,25 @@ const LandingPage = () => {
       {/* Products Section */}
       <div className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Baby Products</h2>
-            <p className="text-gray-600 text-lg">Carefully selected items for your little one</p>
+          <div className="text-center mb-8">
+            <h2 className="text-4xl font-extrabold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent hover:from-pink-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 inline-block mb-6">
+              ALL PRODUCT
+            </h2>
+
+            {/* Search Results Count */}
+            {debouncedSearchTerm && !loading && (
+              <div className="mb-4">
+                {filteredProducts.length > 0 ? (
+                  <p className="text-lg text-gray-700">
+                    Found <span className="font-bold text-pink-600">{filteredProducts.length}</span> product{filteredProducts.length !== 1 ? 's' : ''} for "<span className="font-semibold">{debouncedSearchTerm}</span>"
+                  </p>
+                ) : (
+                  <p className="text-lg text-gray-600">
+                    No products found for "<span className="font-semibold">{debouncedSearchTerm}</span>"
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Loading State */}
@@ -323,32 +359,15 @@ const LandingPage = () => {
                       <span className="text-6xl">🧸</span>
                     </div>
                   )}
-                  <button
-                    onClick={() => toggleLike(product.id)}
-                    className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all duration-200"
-                  >
-                    {likedItems.has(product.id) ? (
-                      <HeartSolidIcon className="h-5 w-5 text-red-500" />
-                    ) : (
-                      <HeartIcon className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                  <div className={`absolute top-2 right-12 w-3 h-3 rounded-full ${
-                    product.inStock ? 'bg-green-500' : 'bg-red-500'
-                  }`}></div>
                 </div>
 
                 {/* Product Info */}
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.name}</h3>
-                  <div className="flex items-center space-x-1 mb-3">
-                    {renderStars(product.rating || 0)}
-                    <span className="text-sm text-gray-600">({product.reviews || 0})</span>
-                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{product.name}</h3>
                   
                   {/* Price */}
                   <div className="mb-4">
-                    <span className="text-xl font-bold text-gray-900">${product.price}</span>
+                    <span className="text-xl font-bold text-gray-900">৳{product.price}</span>
                   </div>
 
                   {/* Add to Cart Button */}
@@ -377,27 +396,27 @@ const LandingPage = () => {
               <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TruckIcon className="h-8 w-8 text-pink-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Free & Next Day Delivery</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">বিনামূল্যে এবং পরের দিন ডেলিভারি</h3>
               <p className="text-gray-600">
-                Get your baby essentials delivered to your doorstep with our fast and reliable delivery service.
+                আমাদের দ্রুত এবং নির্ভরযোগ্য ডেলিভারি পরিষেবার মাধ্যমে আপনার শিশুর প্রয়োজনীয় জিনিসগুলি আপনার দরজায় পৌঁছে দিন।
               </p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ShieldCheckIcon className="h-8 w-8 text-purple-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">100% Safety Guarantee</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">১০০% নিরাপত্তা গ্যারান্টি</h3>
               <p className="text-gray-600">
-                All our products are tested and certified safe for babies. Your little one's safety is our priority.
+                আমাদের সমস্ত পণ্য পরীক্ষিত এবং শিশুদের জন্য নিরাপদ হিসেবে সার্টিফাইড। আপনার ছোট্টটির নিরাপত্তা আমাদের অগ্রাধিকার।
               </p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TagIcon className="h-8 w-8 text-green-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Great Daily Deals</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">চমৎকার দৈনিক অফার</h3>
               <p className="text-gray-600">
-                Save more on baby essentials with our daily discounts and special offers for new parents.
+                নতুন অভিভাবকদের জন্য আমাদের দৈনিক ছাড় এবং বিশেষ অফারের মাধ্যমে শিশুর প্রয়োজনীয় জিনিসে আরও বেশি সাশ্রয় করুন।
               </p>
             </div>
           </div>
@@ -405,77 +424,65 @@ const LandingPage = () => {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white py-12">
+      <footer className="bg-gradient-to-br from-purple-900 via-pink-900 to-purple-800 text-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-            {/* Logo & Contact */}
-            <div className="md:col-span-1">
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">👶</span>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">BABYSHOP</h3>
-                  <p className="text-sm text-gray-500">BABY & KIDS STORE</p>
-                </div>
-              </div>
-              <div className="space-y-2 text-sm text-gray-600">
-                <p>📞 +1 (555) 123-4567</p>
-                <p>📍 123 Baby Street, Kids City</p>
-                <p>✉️ hello@babyshop.com</p>
-                <p>🌐 www.babyshop.com</p>
-              </div>
+          <div className="text-center">
+            {/* Logo & Brand */}
+            <div className="mb-4">
+              <h3 className="text-2xl md:text-3xl font-extrabold mb-1 bg-gradient-to-r from-pink-300 via-purple-300 to-pink-300 bg-clip-text text-transparent hover:from-pink-400 hover:via-purple-400 hover:to-pink-400 transition-all duration-300 cursor-pointer transform hover:scale-105 inline-block">
+                BRO SHOP BD
+              </h3>
+              <p className="text-purple-200 text-sm font-semibold">BABY & KIDS STORE</p>
             </div>
 
-            {/* Top Cities */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">TOP CITIES</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>New York</li>
-                <li>Los Angeles</li>
-                <li>Chicago</li>
-                <li>Houston</li>
-                <li>Phoenix</li>
-              </ul>
+            {/* Contact Information */}
+            <div className="flex flex-wrap justify-center items-center gap-3 mb-4 text-sm">
+              {/* Phone */}
+              <a 
+                href="tel:+8801521330152" 
+                className="group bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-pink-500/50 border border-white/20 hover:border-pink-400"
+              >
+                <span className="mr-2">📞</span>
+                <span className="text-white font-medium group-hover:text-pink-300 transition-colors">+88 01521330152</span>
+              </a>
+
+              {/* Location */}
+              <a 
+                href="https://maps.google.com/?q=Konapara,Demra,Dhaka" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="group bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-purple-500/50 border border-white/20 hover:border-purple-400"
+              >
+                <span className="mr-2">📍</span>
+                <span className="text-white font-medium group-hover:text-purple-300 transition-colors">Konapara, Demra, Dhaka</span>
+              </a>
+
+              {/* Email */}
+              <a 
+                href="mailto:hello@broshopbd.com" 
+                className="group bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-pink-500/50 border border-white/20 hover:border-pink-400"
+              >
+                <span className="mr-2">✉️</span>
+                <span className="text-white font-medium group-hover:text-pink-300 transition-colors">hello@broshopbd.com</span>
+              </a>
+
+              {/* Website */}
+              <a 
+                href="https://www.broshopbd.xyx" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="group bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-purple-500/50 border border-white/20 hover:border-purple-400"
+              >
+                <span className="mr-2">🌐</span>
+                <span className="text-white font-medium group-hover:text-purple-300 transition-colors">www.broshopbd.xyx</span>
+              </a>
             </div>
 
-            {/* Categories */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">CATEGORIES</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>Baby Feeding</li>
-                <li>Baby Clothing</li>
-                <li>Baby Toys</li>
-                <li>Baby Care</li>
-                <li>Nursery Items</li>
-              </ul>
-            </div>
-
-            {/* About Us */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">ABOUT US</h4>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>Company Information</li>
-                <li>Careers</li>
-                <li>Store Locations</li>
-                <li>Affiliate Program</li>
-                <li>Copyright</li>
-              </ul>
-            </div>
-
-            {/* Download App */}
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">DOWNLOAD APP</h4>
-              <div className="space-y-3">
-                <div className="bg-gray-100 p-3 rounded-lg text-center">
-                  <p className="text-sm font-semibold text-gray-900">ANDROID APP</p>
-                  <p className="text-xs text-gray-600">on Google Play</p>
-                </div>
-                <div className="bg-gray-100 p-3 rounded-lg text-center">
-                  <p className="text-sm font-semibold text-gray-900">Download on the</p>
-                  <p className="text-xs text-gray-600">App Store</p>
-                </div>
-              </div>
+            {/* Copyright */}
+            <div className="pt-3 border-t border-white/20">
+              <p className="text-purple-200 text-xs">
+                © {new Date().getFullYear()} BRO SHOP BD. All rights reserved.
+              </p>
             </div>
           </div>
         </div>
