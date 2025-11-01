@@ -32,7 +32,15 @@ const LandingPage = () => {
       show_indicators: boolean;
       show_controls: boolean;
     };
-  } | null>(null)
+  }>({
+    slides: [],
+    settings: {
+      slide_duration: 5,
+      auto_play: true,
+      show_indicators: false,
+      show_controls: false
+    }
+  })
   const [sliderLoading, setSliderLoading] = useState(true)
   const searchRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
@@ -74,12 +82,41 @@ const LandingPage = () => {
         setSliderLoading(true)
         const data = await apiClient.getSliderData()
         
-        // Slides are already sorted by order from API
-        setSliderData(data)
+        // Validate data structure and ensure slides/settings exist
+        if (data && Array.isArray(data.slides) && data.settings) {
+          setSliderData({
+            slides: data.slides || [],
+            settings: data.settings || {
+              slide_duration: 5,
+              auto_play: true,
+              show_indicators: false,
+              show_controls: false
+            }
+          })
+        } else {
+          // Set default empty structure if API returns invalid data
+          setSliderData({
+            slides: [],
+            settings: {
+              slide_duration: 5,
+              auto_play: true,
+              show_indicators: false,
+              show_controls: false
+            }
+          })
+        }
       } catch (error) {
         console.error('Failed to load slider data:', error)
-        // Fallback to null if API fails
-        setSliderData(null)
+        // Fallback to empty structure if API fails
+        setSliderData({
+          slides: [],
+          settings: {
+            slide_duration: 5,
+            auto_play: true,
+            show_indicators: false,
+            show_controls: false
+          }
+        })
       } finally {
         setSliderLoading(false)
       }
@@ -90,14 +127,14 @@ const LandingPage = () => {
 
   // Reset slide index when slides change
   useEffect(() => {
-    if (sliderData && sliderData.slides.length > 0) {
+    if (sliderData.slides && sliderData.slides.length > 0) {
       setCurrentSlide(0)
     }
-  }, [sliderData?.slides.length])
+  }, [sliderData.slides.length])
 
   // Auto-advance slides based on duration from API (convert seconds to milliseconds)
   useEffect(() => {
-    if (!sliderData || !sliderData.settings.auto_play || sliderData.slides.length === 0) return
+    if (!sliderData.settings.auto_play || !sliderData.slides || sliderData.slides.length === 0) return
 
     const durationMs = sliderData.settings.slide_duration * 1000
     const interval = setInterval(() => {
@@ -105,7 +142,7 @@ const LandingPage = () => {
     }, durationMs)
 
     return () => clearInterval(interval)
-  }, [sliderData?.slides.length, sliderData?.settings.auto_play, sliderData?.settings.slide_duration])
+  }, [sliderData.slides.length, sliderData.settings.auto_play, sliderData.settings.slide_duration])
 
   // Fetch all products once on mount
   useEffect(() => {
@@ -262,7 +299,7 @@ const LandingPage = () => {
                     </div>
                   </div>
                 </div>
-              ) : sliderData && sliderData.slides.length > 0 ? (
+              ) : sliderData.slides && sliderData.slides.length > 0 ? (
                 sliderData.slides.map((slide) => (
                   <div key={slide.id} className="w-full flex-shrink-0">
                     <div className="relative w-full h-[400px] md:h-[500px]">
