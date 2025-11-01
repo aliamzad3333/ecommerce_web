@@ -20,7 +20,7 @@ const Home = () => {
 
   useEffect(() => {
     // Load products when component mounts
-    dispatch(fetchProducts() as any)
+    dispatch(fetchProducts({}) as any)
     
     // Load categories from API
     loadCategories()

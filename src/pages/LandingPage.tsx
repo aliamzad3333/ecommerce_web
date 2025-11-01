@@ -329,7 +329,7 @@ const LandingPage = () => {
             <div className="text-center py-12">
               <p className="text-red-600 mb-4">Error loading products: {error}</p>
               <button
-                onClick={() => dispatch(fetchProducts() as any)}
+                onClick={() => dispatch(fetchProducts({}) as any)}
                 className="bg-pink-600 text-white px-6 py-2 rounded-lg hover:bg-pink-700"
               >
                 Retry
