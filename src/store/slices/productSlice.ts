@@ -44,7 +44,7 @@ export const fetchProducts = createAsyncThunk(
         id: p.id,
         name: p.name,
         price: p.price,
-        image: p.image_url || '', // Map image_url to image
+        image: p.image_url || '', // Map image_url to image (already relative path from backend)
         description: p.description || '',
         category: p.category,
         inStock: typeof p.inStock === 'boolean' ? p.inStock : p.in_stock,
@@ -72,7 +72,7 @@ export const fetchProduct = createAsyncThunk(
         id: p.id,
         name: p.name,
         price: p.price,
-        image: p.image_url || '',
+        image: p.image_url || '', // Already relative path from backend
         description: p.description || '',
         category: p.category,
         inStock: typeof p.inStock === 'boolean' ? p.inStock : p.in_stock,

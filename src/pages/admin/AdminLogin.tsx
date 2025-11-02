@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { EyeIcon, EyeSlashIcon, LockClosedIcon, UserIcon } from '@heroicons/react/24/outline'
 import { setUser } from '../../store/slices/userSlice'
+import { apiClient } from '../../services/api'
 
 const AdminLogin = () => {
   const navigate = useNavigate()
@@ -28,23 +29,28 @@ const AdminLogin = () => {
     setIsLoading(true)
     setError('')
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    // Simple admin credentials check
-    if (formData.username === 'admin' && formData.password === 'admin123') {
-      dispatch(setUser({
-        id: 'admin-1',
-        name: 'Admin User',
-        email: 'admin@broshop.com',
-        isAdmin: true,
-      }))
-      navigate('/admin/dashboard')
-    } else {
-      setError('Invalid username or password')
+    try {
+      // Call the real backend API for admin login
+      const response = await apiClient.login(formData.username, formData.password)
+      
+      // Check if user is admin
+      if (response.user.isAdmin) {
+        dispatch(setUser({
+          id: response.user.id,
+          name: response.user.name,
+          email: response.user.email,
+          isAdmin: true,
+        }))
+        navigate('/admin/dashboard')
+      } else {
+        setError('Access denied. Admin privileges required.')
+      }
+    } catch (error: any) {
+      console.error('Admin login failed:', error)
+      setError(error.message || 'Invalid username or password')
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   return (

@@ -19,12 +19,13 @@ import AdminOrdersEnhanced from './pages/admin/AdminOrdersEnhanced'
 import AdminProducts from './pages/admin/AdminProducts'
 import AdminMessages from './pages/admin/AdminMessages'
 import AdminSliderSettings from './pages/admin/AdminSliderSettings'
+import { usePageTitle } from './hooks/usePageTitle'
 
-function App() {
+function AppContent() {
+  usePageTitle()
+  
   return (
-        <Provider store={store}>
-          <Router basename="/">
-        <Routes>
+    <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/shop" element={<Layout />}>
@@ -67,6 +68,14 @@ function App() {
             <Route path="slider" element={<AdminSliderSettings />} />
           </Route>
         </Routes>
+  )
+}
+
+function App() {
+  return (
+    <Provider store={store}>
+      <Router basename="/">
+        <AppContent />
       </Router>
     </Provider>
   )

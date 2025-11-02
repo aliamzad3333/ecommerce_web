@@ -10,7 +10,7 @@ type Product = {
   specification?: string
   material?: string
 }
-import { PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, XMarkIcon, TrashIcon } from '@heroicons/react/24/outline'
 
 const AdminProducts = () => {
   const [products, setProducts] = useState<Product[]>([])
@@ -233,25 +233,58 @@ const AdminProducts = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm">
-                    <button
-                      onClick={() => {
-                        setEditingProductId(product.id)
-                        setFormData({
-                          name: product.name || '',
-                          price: String(product.price ?? ''),
-                          category: product.category || '',
-                          description: product.description || '',
-                          specification: product.specification || '',
-                          material: product.material || '',
-                          inStock: !!product.inStock,
-                        })
-                        setImageFile(null)
-                        setShowModal(true)
-                      }}
-                      className="px-3 py-1 rounded-md border border-gray-300 hover:bg-gray-50"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingProductId(product.id)
+                          setFormData({
+                            name: product.name || '',
+                            price: String(product.price ?? ''),
+                            category: product.category || '',
+                            description: product.description || '',
+                            specification: product.specification || '',
+                            material: product.material || '',
+                            inStock: !!product.inStock,
+                          })
+                          setImageFile(null)
+                          setShowModal(true)
+                        }}
+                        className="px-3 py-1 rounded-md border border-gray-300 hover:bg-gray-50 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (window.confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) {
+                            try {
+                              const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'http://130.94.40.85'
+                              const response = await fetch(`${baseUrl}/api/admin/products/${product.id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                  'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                                }
+                              })
+                              
+                              if (response.ok) {
+                                setSuccessMessage('Product deleted successfully!')
+                                setTimeout(() => setSuccessMessage(''), 3000)
+                                await loadProducts()
+                              } else {
+                                const errorText = await response.text()
+                                alert(`Failed to delete product: ${response.status} ${errorText}`)
+                              }
+                            } catch (error) {
+                              console.error('Error deleting product:', error)
+                              alert(`Failed to delete product: ${error}`)
+                            }
+                          }
+                        }}
+                        className="px-3 py-1 rounded-md border border-red-300 text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
