@@ -22,12 +22,20 @@ export interface ShippingAddress {
 
 export interface Order {
   id: string
+  user_id?: string
+  guest_name?: string
   items: OrderItem[]
+  subtotal?: number
+  shipping_cost?: number
+  tax?: number
   total: number
   shippingAddress: ShippingAddress
   paymentMethod: string
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled'
+  paymentStatus?: string
+  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded'
   orderDate: string
+  orderNotes?: string
+  adminNotes?: string
   trackingNumber?: string
 }
 

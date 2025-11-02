@@ -5,6 +5,8 @@ import type { RootState } from '../store/store'
 import { logout } from '../store/slices/userSlice'
 import { fetchProducts } from '../store/slices/productSlice'
 import apiClient from '../services/api'
+import { addToCart } from '../store/slices/cartSlice'
+import CartFlyout from '../components/molecules/CartFlyout'
 import { 
   ShoppingCartIcon, 
   MagnifyingGlassIcon,
@@ -42,11 +44,13 @@ const LandingPage = () => {
     }
   })
   const [sliderLoading, setSliderLoading] = useState(true)
+  const [isCartOpen, setIsCartOpen] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { currentUser, isAuthenticated } = useSelector((state: RootState) => state.user)
   const { products, loading, error } = useSelector((state: RootState) => state.products)
+  const { itemCount } = useSelector((state: RootState) => state.cart)
 
   // Handle click outside to close search
   useEffect(() => {
@@ -85,7 +89,7 @@ const LandingPage = () => {
         // Validate data structure and ensure slides/settings exist
         if (data && Array.isArray(data.slides) && data.settings) {
           setSliderData({
-            slides: data.slides || [],
+            slides: data.slides || [], // Already relative paths from backend
             settings: data.settings || {
               slide_duration: 5,
               auto_play: true,
@@ -174,6 +178,21 @@ const LandingPage = () => {
 
   const babyProducts = filteredProducts.length > 0 ? filteredProducts : []
 
+  const handleAddToCart = (product: typeof babyProducts[0]) => {
+    if (!product.inStock) return
+    
+    dispatch(addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      description: product.category
+    }))
+    
+    // Open cart flyout when item is added
+    setIsCartOpen(true)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -243,15 +262,20 @@ const LandingPage = () => {
                   </div>
                 )}
               </div>
-              <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+              >
                 <div className="relative">
                   <ShoppingCartIcon className="h-8 w-8" />
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    0
-                  </span>
+                  {itemCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                      {itemCount > 99 ? '99+' : itemCount}
+                    </span>
+                  )}
                 </div>
                 <span className="text-sm">My Cart</span>
-              </div>
+              </button>
 
               {/* User Authentication */}
               {isAuthenticated ? (
@@ -383,12 +407,16 @@ const LandingPage = () => {
                 <div className="relative">
                   {product.image ? (
                     <img
+                      key={`${product.id}-${product.image}`}
                       src={product.image}
                       alt={product.name}
                       className="w-full h-48 object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
-                        target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5YTliYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='
+                        // Prevent infinite loops
+                        if (!target.src.includes('data:image/svg')) {
+                          target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2U1ZTdlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5YTliYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4='
+                        }
                       }}
                     />
                   ) : (
@@ -404,11 +432,20 @@ const LandingPage = () => {
                   
                   {/* Price */}
                   <div className="mb-4">
-                    <span className="text-xl font-bold text-gray-900">৳{product.price}</span>
+                    {product.originalPrice && product.originalPrice > product.price ? (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xl font-bold text-gray-900">৳{product.price.toFixed(2)}</span>
+                        <span className="text-sm text-gray-500 line-through">৳{product.originalPrice.toFixed(2)}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xl font-bold text-gray-900">৳{product.price.toFixed(2)}</span>
+                    )}
                   </div>
 
                   {/* Add to Cart Button */}
                   <button
+                    onClick={() => handleAddToCart(product)}
+                    disabled={!product.inStock}
                     className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
                       product.inStock
                         ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 transform hover:scale-105'
@@ -524,6 +561,9 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Cart Flyout */}
+      <CartFlyout isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </div>
   )
 }
