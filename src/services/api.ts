@@ -67,7 +67,12 @@ class ApiClient {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || errorData.message || 'Request failed')
+        console.error('❌ API Error Response:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        })
+        throw new Error(errorData.error || errorData.details || errorData.message || 'Request failed')
       }
 
       return await response.json()
@@ -372,10 +377,30 @@ class ApiClient {
     return this.request<any[]>('/admin/users')
   }
 
-  async updateOrderStatus(orderId: string, status: string, adminNotes?: string) {
-    return this.request<any>(`/admin/orders/${orderId}/status`, {
+  async updateOrderStatus(orderId: string, status: string) {
+    const requestBody = { status }
+    console.log('📤 Update Status API Call:')
+    console.log('   Endpoint:', `/admin/orders/${orderId}/status`)
+    console.log('   Method: PATCH')
+    console.log('   Body:', JSON.stringify(requestBody))
+    console.log('   Token present:', !!this.token)
+    
+    return this.request<{
+      message: string;
+      order: {
+        order_id: string;
+        status: string;
+        order_notes: string;
+        admin_notes: string;
+        shipping_address: any;
+        updated_at: string;
+        shipped_at: string | null;
+        delivered_at: string | null;
+        [key: string]: any;
+      };
+    }>(`/admin/orders/${orderId}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status, admin_notes: adminNotes }),
+      body: JSON.stringify(requestBody),
     })
   }
 

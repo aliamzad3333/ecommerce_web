@@ -60,7 +60,8 @@ const AdminOrdersEnhanced = () => {
       
       // Transform API response to match expected format
       const transformedOrders = response.orders.map((order: any) => ({
-        id: order.id || order.order_id,
+        id: order.order_id || order.id, // Use custom order_id (broshopbd_000xxx)
+        order_id: order.order_id, // Keep the custom ID for API calls
         user_id: order.user_id,
         guest_name: order.guest_name,
         items: order.items || [],
@@ -94,6 +95,11 @@ const AdminOrdersEnhanced = () => {
         total: response.total,
         status_count: response.status_count
       })
+      console.log('📋 Order IDs in list:', transformedOrders.map(o => ({
+        id: o.id,
+        order_id: o.order_id,
+        hasCustomId: !!o.order_id
+      })))
     } catch (error: any) {
       console.error('❌ Failed to fetch orders:', error)
       console.error('Error details:', {
@@ -160,36 +166,41 @@ const AdminOrdersEnhanced = () => {
     { value: 'cancelled', label: 'Cancelled' },
   ]
 
-  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
-    setUpdatingStatus(orderId)
+  const handleStatusUpdate = async (orderIdOrCustomId: string, newStatus: string) => {
+    setUpdatingStatus(orderIdOrCustomId)
     try {
-      await apiClient.updateOrderStatus(orderId, newStatus)
-      dispatch(updateOrderStatus({ orderId, status: newStatus as any }))
-      // Refresh orders to get latest data
-      const response = await apiClient.getAdminOrders({ page: 1, limit: 100 })
-      const transformedOrders = response.orders.map((order: any) => ({
-        id: order.id,
-        items: order.items || [],
-        total: order.total || 0,
-        shippingAddress: {
-          firstName: order.shipping_address?.full_name?.split(' ')[0] || '',
-          lastName: order.shipping_address?.full_name?.split(' ').slice(1).join(' ') || '',
-          address: order.shipping_address?.address_line1 || '',
-          city: order.shipping_address?.city || '',
-          state: order.shipping_address?.state || '',
-          zipCode: order.shipping_address?.postal_code || '',
-          country: order.shipping_address?.country || '',
-          phone: order.shipping_address?.phone || '',
-          email: order.shipping_address?.email || ''
-        },
-        paymentMethod: order.payment_method || 'cash',
-        status: order.status || 'pending',
-        orderDate: order.created_at || new Date().toISOString(),
-        orderNotes: order.order_notes || ''
-      }))
-      dispatch(setOrders(transformedOrders))
+      // Find the order to get the custom order_id
+      const order = orders.find(o => o.id === orderIdOrCustomId || o.order_id === orderIdOrCustomId)
+      
+      console.log(`🔄 Updating order:`)
+      console.log(`   Input ID: ${orderIdOrCustomId}`)
+      console.log(`   Found order:`, order ? 'YES' : 'NO')
+      if (order) {
+        console.log(`   Order.id: ${order.id}`)
+        console.log(`   Order.order_id: ${order.order_id}`)
+      }
+      
+      const customOrderId = order?.order_id || order?.id || orderIdOrCustomId
+      console.log(`   Final ID to send to API: ${customOrderId}`)
+      console.log(`   New status: ${newStatus}`)
+      
+      // Check if customOrderId looks valid
+      if (!customOrderId || customOrderId === 'undefined') {
+        console.error('❌ Invalid order ID detected!')
+        alert('Cannot update order: Invalid order ID')
+        return
+      }
+      
+      const updateResponse = await apiClient.updateOrderStatus(customOrderId, newStatus)
+      console.log('✅ Status updated:', updateResponse)
+      
+      // Update the order in Redux store
+      dispatch(updateOrderStatus({ orderId: orderIdOrCustomId, status: newStatus as any }))
+      
+      // Refresh orders to get latest data including timestamps
+      fetchOrders()
     } catch (error: any) {
-      console.error('Failed to update order status:', error)
+      console.error('❌ Failed to update order status:', error)
       alert(error.message || 'Failed to update order status')
     } finally {
       setUpdatingStatus(null)
@@ -206,10 +217,19 @@ const AdminOrdersEnhanced = () => {
     { value: 'refunded', label: 'Refunded' }
   ]
 
-  const handleViewOrder = async (orderId: string) => {
+  const handleViewOrder = async (orderIdOrCustomId: string) => {
     try {
       dispatch(setLoading(true))
-      const response = await apiClient.getOrder(orderId)
+      
+      // Find the order to get the custom order_id
+      const order = orders.find(o => o.id === orderIdOrCustomId || o.order_id === orderIdOrCustomId)
+      const customOrderId = order?.order_id || order?.id || orderIdOrCustomId
+      
+      console.log('👁️ Viewing order:')
+      console.log('   Input ID:', orderIdOrCustomId)
+      console.log('   Custom order_id:', customOrderId)
+      
+      const response = await apiClient.getOrder(customOrderId)
       setSelectedOrder(response.order)
       setShowOrderDetails(true)
       console.log('✅ Fetched order details:', response.order)
@@ -605,7 +625,7 @@ const AdminOrdersEnhanced = () => {
 
       {/* Order Details Modal */}
       {showOrderDetails && selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
@@ -803,7 +823,8 @@ const AdminOrdersEnhanced = () => {
                 {selectedOrder.status === 'pending' && (
                   <button
                     onClick={() => {
-                      handleStatusUpdate(selectedOrder.id, 'confirmed')
+                      const orderId = selectedOrder.order_id || selectedOrder.id
+                      handleStatusUpdate(orderId, 'confirmed')
                       setShowOrderDetails(false)
                     }}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -815,7 +836,8 @@ const AdminOrdersEnhanced = () => {
                 {selectedOrder.status === 'confirmed' && (
                   <button
                     onClick={() => {
-                      handleStatusUpdate(selectedOrder.id, 'shipped')
+                      const orderId = selectedOrder.order_id || selectedOrder.id
+                      handleStatusUpdate(orderId, 'shipped')
                       setShowOrderDetails(false)
                     }}
                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -827,7 +849,8 @@ const AdminOrdersEnhanced = () => {
                 {selectedOrder.status === 'shipped' && (
                   <button
                     onClick={() => {
-                      handleStatusUpdate(selectedOrder.id, 'delivered')
+                      const orderId = selectedOrder.order_id || selectedOrder.id
+                      handleStatusUpdate(orderId, 'delivered')
                       setShowOrderDetails(false)
                     }}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"

@@ -22,6 +22,7 @@ export interface ShippingAddress {
 
 export interface Order {
   id: string
+  order_id?: string  // Custom order ID (broshopbd_000xxx)
   user_id?: string
   guest_name?: string
   items: OrderItem[]
