@@ -5,6 +5,7 @@ type Product = {
   name: string
   category: string
   price: number
+  offer_price?: number
   inStock?: boolean
   description?: string
   specification?: string
@@ -19,6 +20,7 @@ const AdminProducts = () => {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
+    offer_price: '',
     category: '',
     description: '',
     specification: '',
@@ -51,6 +53,7 @@ const AdminProducts = () => {
           name: p.name,
           category: p.category,
           price: p.price,
+          offer_price: p.offer_price,
           inStock: typeof p.inStock === 'boolean' ? p.inStock : p.in_stock,
           description: p.description,
           specification: p.specification,
@@ -92,6 +95,7 @@ const AdminProducts = () => {
     setFormData({
       name: '',
       price: '',
+      offer_price: '',
       category: '',
       description: '',
       specification: '',
@@ -107,7 +111,7 @@ const AdminProducts = () => {
     try {
       setSubmitting(true)
       
-      const productData = {
+      const productData: any = {
         name: formData.name,
         price: parseFloat(formData.price),
         category: formData.category,
@@ -115,6 +119,11 @@ const AdminProducts = () => {
         specification: formData.specification,
         material: formData.material,
         in_stock: formData.inStock
+      }
+      
+      // Add offer_price only if provided
+      if (formData.offer_price && formData.offer_price.trim() !== '') {
+        productData.offer_price = parseFloat(formData.offer_price)
       }
       
       const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'http://130.94.40.85'
@@ -215,6 +224,7 @@ const AdminProducts = () => {
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Name</th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Category</th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Price</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Offer Price</th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Stock</th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Actions</th>
               </tr>
@@ -224,7 +234,25 @@ const AdminProducts = () => {
                 <tr key={product.id} className="border-t">
                   <td className="px-6 py-4 text-sm text-gray-900">{product.name}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{product.category}</td>
-                  <td className="px-6 py-4 text-sm text-gray-900">${product.price}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    {product.offer_price && product.offer_price < product.price ? (
+                      <div className="space-y-1">
+                        <div className="text-gray-400 line-through text-xs">${product.price}</div>
+                        <div className="font-semibold text-pink-600">${product.offer_price}</div>
+                      </div>
+                    ) : (
+                      <div>${product.price}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900">
+                    {product.offer_price && product.offer_price < product.price ? (
+                      <span className="bg-red-100 text-red-800 px-2 py-1 text-xs rounded-full font-semibold">
+                        {Math.round(((product.price - product.offer_price) / product.price) * 100)}% OFF
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">No offer</span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`px-2 py-1 text-xs rounded-full ${
                       product.inStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -240,6 +268,7 @@ const AdminProducts = () => {
                           setFormData({
                             name: product.name || '',
                             price: String(product.price ?? ''),
+                            offer_price: String(product.offer_price ?? ''),
                             category: product.category || '',
                             description: product.description || '',
                             specification: product.specification || '',
@@ -341,6 +370,21 @@ const AdminProducts = () => {
                       value={formData.price}
                       onChange={handleInputChange}
                       required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Offer Price (Optional)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="offer_price"
+                      value={formData.offer_price}
+                      onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="0.00"
                     />

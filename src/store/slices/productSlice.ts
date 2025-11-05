@@ -5,6 +5,7 @@ export interface Product {
   id: string
   name: string
   price: number
+  offer_price?: number  // Discounted price if available
   image: string
   description: string
   category: string
@@ -44,6 +45,7 @@ export const fetchProducts = createAsyncThunk(
         id: p.id,
         name: p.name,
         price: p.price,
+        offer_price: p.offer_price || null,  // Discounted price
         image: p.image_url || '', // Map image_url to image (already relative path from backend)
         description: p.description || '',
         category: p.category,
@@ -72,6 +74,7 @@ export const fetchProduct = createAsyncThunk(
         id: p.id,
         name: p.name,
         price: p.price,
+        offer_price: p.offer_price || null,  // Discounted price
         image: p.image_url || '', // Already relative path from backend
         description: p.description || '',
         category: p.category,

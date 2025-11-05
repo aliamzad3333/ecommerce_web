@@ -402,15 +402,19 @@ const LandingPage = () => {
           {!loading && !error && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {babyProducts.map((product) => (
-              <div key={product.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+              <div 
+                key={product.id} 
+                onClick={() => navigate(`/product/${encodeURIComponent(product.name.toLowerCase().replace(/\s+/g, '-'))}`)}
+                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer group"
+              >
                 {/* Product Image */}
-                <div className="relative">
+                <div className="relative overflow-hidden">
                   {product.image ? (
                     <img
                       key={`${product.id}-${product.image}`}
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
                         // Prevent infinite loops
@@ -428,14 +432,19 @@ const LandingPage = () => {
 
                 {/* Product Info */}
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{product.name}</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 group-hover:text-pink-600 transition-colors">{product.name}</h3>
                   
                   {/* Price */}
                   <div className="mb-4">
-                    {product.originalPrice && product.originalPrice > product.price ? (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xl font-bold text-gray-900">৳{product.price.toFixed(2)}</span>
-                        <span className="text-sm text-gray-500 line-through">৳{product.originalPrice.toFixed(2)}</span>
+                    {product.offer_price && product.offer_price < product.price ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl font-bold text-pink-600">৳{product.offer_price.toFixed(2)}</span>
+                          <span className="text-sm text-gray-500 line-through">৳{product.price.toFixed(2)}</span>
+                        </div>
+                        <span className="inline-block bg-red-500 text-white px-2 py-0.5 rounded text-xs font-semibold">
+                          {Math.round(((product.price - product.offer_price) / product.price) * 100)}% OFF
+                        </span>
                       </div>
                     ) : (
                       <span className="text-xl font-bold text-gray-900">৳{product.price.toFixed(2)}</span>
@@ -444,7 +453,10 @@ const LandingPage = () => {
 
                   {/* Add to Cart Button */}
                   <button
-                    onClick={() => handleAddToCart(product)}
+                    onClick={(e) => {
+                      e.stopPropagation() // Prevent card click when clicking add to cart
+                      handleAddToCart(product)
+                    }}
                     disabled={!product.inStock}
                     className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 ${
                       product.inStock

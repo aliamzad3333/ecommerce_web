@@ -7,6 +7,7 @@ import ProtectedRoute from './components/atoms/ProtectedRoute'
 import Home from './pages/Home'
 import LandingPage from './pages/LandingPage'
 import ProductDetails from './pages/ProductDetails'
+import ProductDetailsPage from './pages/ProductDetailsPage'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import OrderConfirmation from './pages/OrderConfirmation'
@@ -28,6 +29,7 @@ function AppContent() {
     <Routes>
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
+            <Route path="/product/:slug" element={<ProductDetailsPage />} />
             <Route path="/shop" element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="product/:id" element={<ProductDetails />} />
