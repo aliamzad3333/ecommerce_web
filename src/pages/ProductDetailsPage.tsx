@@ -169,7 +169,7 @@ const ProductDetailsPage = () => {
           country: 'Bangladesh',
           phone: formData.phone
         },
-        payment_method: 'cash',
+        payment_method: 'cash' as const,
         subtotal: parseFloat(subtotal.toFixed(2)),
         shipping_cost: parseFloat(shippingCost.toFixed(2)),
         tax: parseFloat('0.00'),
