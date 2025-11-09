@@ -437,11 +437,9 @@ const LandingPage = () => {
                   {/* Price */}
                   <div className="mb-4">
                     {product.offer_price && product.offer_price < product.price ? (
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-bold text-pink-600">৳{product.offer_price.toFixed(2)}</span>
-                          <span className="text-sm text-gray-500 line-through">৳{product.price.toFixed(2)}</span>
-                        </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xl font-bold text-pink-600">৳{product.offer_price.toFixed(2)}</span>
+                        <span className="text-sm text-gray-500 line-through">৳{product.price.toFixed(2)}</span>
                         <span className="inline-block bg-red-500 text-white px-2 py-0.5 rounded text-xs font-semibold">
                           {Math.round(((product.price - product.offer_price) / product.price) * 100)}% OFF
                         </span>

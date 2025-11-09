@@ -10,11 +10,17 @@ import {
   ArrowLeftIcon,
   MinusIcon,
   PlusIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  PhoneIcon,
+  UserIcon,
+  MapPinIcon,
+  LockClosedIcon
 } from '@heroicons/react/24/solid'
-import { HeartIcon as HeartOutlineIcon } from '@heroicons/react/24/outline'
+import { HeartIcon as HeartOutlineIcon, PhoneIcon as PhoneOutlineIcon } from '@heroicons/react/24/outline'
 import { addToCart } from '../store/slices/cartSlice'
 import { apiClient } from '../services/api'
+import LoadingOverlay from '../components/molecules/LoadingOverlay'
+import OrderConfirmationModal from '../components/molecules/OrderConfirmationModal'
 
 const ProductDetailsPage = () => {
   const { slug } = useParams()
@@ -26,6 +32,19 @@ const ProductDetailsPage = () => {
   const [quantity, setQuantity] = useState(1)
   const [isLiked, setIsLiked] = useState(false)
   const [isAddedToCart, setIsAddedToCart] = useState(false)
+  
+  // Checkout form state
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    address: '',
+    shippingMethod: 'outside'
+  })
+  const [deliveryCharge, setDeliveryCharge] = useState(70)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showOrderConfirmation, setShowOrderConfirmation] = useState(false)
+  const [orderConfirmationData, setOrderConfirmationData] = useState<any>(null)
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     const fetchProductBySlug = async () => {
@@ -94,6 +113,120 @@ const ProductDetailsPage = () => {
 
   const incrementQuantity = () => setQuantity(prev => prev + 1)
   const decrementQuantity = () => setQuantity(prev => prev > 1 ? prev - 1 : 1)
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setFormData(prev => ({ ...prev, shippingMethod: value }))
+    if (value === 'dhaka') {
+      setDeliveryCharge(50)
+    } else {
+      setDeliveryCharge(70)
+    }
+  }
+
+  const handleOrderSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!formData.name || !formData.phone || !formData.address) {
+      setErrorMessage('দয়া করে সকল তথ্য পূরণ করুন')
+      return
+    }
+
+    if (!product) {
+      setErrorMessage('পণ্য পাওয়া যায়নি')
+      return
+    }
+
+    setIsSubmitting(true)
+    setErrorMessage('')
+    
+    try {
+      const productPrice = product.offer_price || product.price
+      const subtotal = productPrice * quantity
+      const shippingCost = deliveryCharge
+      const tax = 0
+      const grandTotal = subtotal + shippingCost + tax
+      
+      const orderData = {
+        items: [{
+          product_id: product.id,
+          quantity: quantity
+        }],
+        shipping_address: {
+          full_name: formData.name,
+          address_line1: formData.address,
+          city: formData.shippingMethod === 'dhaka' ? 'Dhaka' : 'Outside Dhaka',
+          state: 'Bangladesh',
+          postal_code: '',
+          country: 'Bangladesh',
+          phone: formData.phone
+        },
+        payment_method: 'cash',
+        subtotal: parseFloat(subtotal.toFixed(2)),
+        shipping_cost: parseFloat(shippingCost.toFixed(2)),
+        tax: parseFloat('0.00'),
+        total: parseFloat(grandTotal.toFixed(2))
+      }
+      
+      const response = await apiClient.createOrder(orderData)
+      
+      console.log('✅ Order created successfully:', response)
+      
+      // Prepare order confirmation data
+      const orderId = response.order?.order_id || response.order?.id || 'unknown'
+      const confirmationData = {
+        id: orderId,
+        order_number: response.order?.order_number || orderId,
+        items: response.order?.items || [{
+          product_name: product.name,
+          quantity: quantity
+        }],
+        total: response.order?.total || grandTotal,
+        shipping_address: {
+          full_name: response.order?.shipping_address?.full_name || formData.name,
+          phone: response.order?.shipping_address?.phone || formData.phone,
+          address_line1: response.order?.shipping_address?.address_line1 || formData.address,
+          city: response.order?.shipping_address?.city || (formData.shippingMethod === 'dhaka' ? 'Dhaka' : 'Outside Dhaka')
+        },
+        guest_name: response.order?.guest_name,
+        status: response.order?.status,
+        order_placed_date: response.order?.order_placed_date || response.order?.created_at
+      }
+      
+      // Reset form
+      setFormData({
+        name: '',
+        phone: '',
+        address: '',
+        shippingMethod: 'outside'
+      })
+      setQuantity(1)
+      setErrorMessage('')
+      
+      // Stop loading
+      setIsSubmitting(false)
+      
+      // Show confirmation modal
+      setOrderConfirmationData(confirmationData)
+      setShowOrderConfirmation(true)
+      
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      
+    } catch (error: any) {
+      console.error('Order submission failed:', error)
+      setErrorMessage(error.message || 'অর্ডার সম্পন্ন হয়নি। আবার চেষ্টা করুন।')
+      setIsSubmitting(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -381,7 +514,276 @@ const ProductDetailsPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Order Now Section */}
+        <div className="mt-12 bg-gradient-to-r from-pink-600 to-purple-600 rounded-3xl shadow-2xl p-8 md:p-12">
+          <div className="border-t border-white/20 mb-8"></div>
+          
+          {/* Price Summary */}
+          <div className="text-center mb-8">
+            {product.offer_price && product.offer_price < product.price ? (
+              <>
+                <div className="mb-4">
+                  <span className="text-white text-lg md:text-xl font-semibold">রেগুলার প্রাইস: </span>
+                  <span className="text-white text-2xl md:text-3xl font-bold relative inline-block">
+                    <span className="relative">
+                      ৳{product.price.toFixed(2)} টাকা
+                      <span className="absolute left-0 right-0 top-1/2 h-0.5 bg-green-400 transform -translate-y-1/2"></span>
+                    </span>
+                  </span>
+                </div>
+                <div>
+                  <span className="text-white text-xl md:text-2xl font-semibold">অফার প্রাইস: </span>
+                  <span className="text-white text-4xl md:text-5xl font-bold relative inline-block">
+                    <span className="relative">
+                      ৳{product.offer_price.toFixed(2)} টাকা
+                      <span className="absolute left-0 right-0 bottom-0 h-1 bg-green-400"></span>
+                    </span>
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div>
+                <span className="text-white text-xl md:text-2xl font-semibold">Price: </span>
+                <span className="text-white text-4xl md:text-5xl font-bold">৳{product.price.toFixed(2)} টাকা</span>
+              </div>
+            )}
+          </div>
+
+          {/* Order Now Button - Scrolls to form */}
+          <div className="max-w-md mx-auto mb-8">
+            <button
+              onClick={() => {
+                const formSection = document.getElementById('order-form')
+                formSection?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+              disabled={!product.inStock}
+              className={`w-full py-5 px-8 rounded-xl font-bold text-xl transition-all duration-200 ${
+                product.inStock
+                  ? 'bg-white text-pink-600 hover:bg-pink-50 transform hover:scale-105 shadow-lg hover:shadow-2xl'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {product.inStock ? 'অর্ডার করতে চাই' : 'Out of Stock'}
+            </button>
+          </div>
+
+          {/* Contact Info */}
+          <div className="text-center space-y-6">
+            <p className="text-white text-base md:text-lg font-medium px-4">
+              সরাসরি যোগাযোগ করতে কল করুন সকাল ১০.৩০ টা থেকে রাত ৯.০০ টা পর্যন্ত
+            </p>
+            <a
+              href="tel:01685270352"
+              className="inline-flex items-center gap-3 bg-white rounded-xl px-8 py-4 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all"
+            >
+              <PhoneIcon className="h-6 w-6 text-red-600" />
+              <span className="text-red-600 font-bold text-2xl">01685270352</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Checkout Form Section */}
+        <div id="order-form" className="mt-12 bg-white rounded-3xl shadow-2xl p-8 md:p-12">
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="mb-8 bg-red-50 border-l-4 border-red-500 p-6 rounded-xl">
+              <p className="text-red-700 font-semibold">{errorMessage}</p>
+            </div>
+          )}
+
+          {/* Form Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-3">
+              অর্ডার করতে সঠিক তথ্য দিয়ে নিচের ফর্ম টি পূরণ করুন
+            </h2>
+            <p className="text-gray-600">ক্যাশ অন ডেলিভারিতে অর্ডার করুন</p>
+          </div>
+
+          <form onSubmit={handleOrderSubmit} className="space-y-6">
+            {/* Customer Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column - Form */}
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <UserIcon className="h-6 w-6 text-pink-600" />
+                    আপনার নামঃ <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="আপনার নাম লিখুন"
+                    className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all text-lg"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <MapPinIcon className="h-6 w-6 text-pink-600" />
+                    আপনার সম্পূর্ণ ঠিকানাঃ <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    placeholder="আপনার সম্পূর্ণ ঠিকানা লিখুন"
+                    className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all text-lg"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <PhoneOutlineIcon className="h-6 w-6 text-pink-600" />
+                    আপনার মোবাইল নাম্বারঃ <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    placeholder="আপনার মোবাইল নাম্বার লিখুন"
+                    className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all text-lg"
+                    required
+                  />
+                </div>
+
+                {/* Shipping Options */}
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <TruckIcon className="h-6 w-6 text-pink-600" />
+                    Shipping
+                  </h3>
+                  <div className="space-y-3">
+                    <label className="flex items-center justify-between p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-500 hover:bg-pink-50 transition-all">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="shippingMethod"
+                          value="outside"
+                          checked={formData.shippingMethod === 'outside'}
+                          onChange={handleShippingChange}
+                          className="h-5 w-5 text-pink-600 focus:ring-pink-500"
+                        />
+                        <span className="text-gray-900 font-medium">ঢাকার বাহিরে:</span>
+                      </div>
+                      <span className="font-bold text-pink-600">৳70.00</span>
+                    </label>
+
+                    <label className="flex items-center justify-between p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-500 hover:bg-pink-50 transition-all">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="shippingMethod"
+                          value="dhaka"
+                          checked={formData.shippingMethod === 'dhaka'}
+                          onChange={handleShippingChange}
+                          className="h-5 w-5 text-pink-600 focus:ring-pink-500"
+                        />
+                        <span className="text-gray-900 font-medium">ঢাকা সিটি:</span>
+                      </div>
+                      <span className="font-bold text-pink-600">৳50.00</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Order Summary */}
+              <div>
+                <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl p-6 sticky top-24">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <ShoppingCartIcon className="h-6 w-6 text-pink-600" />
+                    Your order
+                  </h3>
+
+                  {/* Product */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex gap-4 p-4 bg-white rounded-xl shadow-sm">
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        className="w-20 h-20 object-cover rounded-lg"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZTVlN2ViIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzlhOWJhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=='
+                        }}
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 mb-2">{product.name}</h4>
+                        <p className="text-gray-600">× {quantity}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-pink-600">৳{((product.offer_price || product.price) * quantity).toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Order Summary */}
+                  <div className="space-y-3 border-t border-gray-300 pt-4">
+                    <div className="flex justify-between text-gray-700">
+                      <span>Subtotal</span>
+                      <span className="font-semibold">৳{((product.offer_price || product.price) * quantity).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-gray-700">
+                      <span>Shipping</span>
+                      <span className="font-semibold">৳{deliveryCharge.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-xl font-bold text-gray-900 pt-3 border-t border-gray-300">
+                      <span>Total</span>
+                      <span className="text-pink-600">৳{(((product.offer_price || product.price) * quantity) + deliveryCharge).toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  {/* Cash on Delivery */}
+                  <div className="mt-6 p-4 bg-white rounded-xl">
+                    <h4 className="font-bold text-gray-900 mb-2">Cash on delivery</h4>
+                    <p className="text-sm text-gray-600">Pay with cash upon delivery.</p>
+                  </div>
+
+                  {/* Privacy Policy */}
+                  <p className="mt-4 text-xs text-gray-500 leading-relaxed">
+                    Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our privacy policy.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-6">
+              <button
+                type="submit"
+                disabled={!product.inStock || isSubmitting}
+                className={`w-full py-6 px-8 rounded-xl font-bold text-xl transition-all duration-200 flex items-center justify-center gap-3 ${
+                  product.inStock && !isSubmitting
+                    ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white hover:from-pink-700 hover:to-purple-700 transform hover:scale-105 shadow-lg hover:shadow-2xl'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                <LockClosedIcon className="h-6 w-6" />
+                {isSubmitting ? 'অর্ডার প্রসেস হচ্ছে...' : `অর্ডার করুন ৳${(((product.offer_price || product.price) * quantity) + deliveryCharge).toFixed(2)}`}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
+
+      {/* Loading Overlay */}
+      {isSubmitting && <LoadingOverlay />}
+
+      {/* Order Confirmation Modal */}
+      <OrderConfirmationModal
+        isOpen={showOrderConfirmation}
+        onClose={() => {
+          setShowOrderConfirmation(false)
+          setOrderConfirmationData(null)
+        }}
+        orderData={orderConfirmationData}
+      />
     </div>
   )
 }
