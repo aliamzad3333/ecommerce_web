@@ -8,15 +8,14 @@ export interface EnvironmentConfig {
 
 const getEnvironmentConfig = (): EnvironmentConfig => {
   const hostname = window.location.hostname
-  const protocol = window.location.protocol
   const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
   const isProduction = hostname === '130.94.40.85'
   
-  // Use full URL on server, relative URL locally (for dev server proxy)
-  // For production, use the same protocol as the frontend to avoid mixed content issues
-  const apiBaseURL = isLocalhost 
-    ? '/api'  // Relative URL for local dev (vite proxy)
-    : `${protocol}//${hostname}:8080/api`  // Full URL for production server with same protocol
+  // Use relative URL for both local and server
+  // - Locally: Vite proxy handles /api -> localhost:8080
+  // - On server: Nginx proxy handles /api -> 127.0.0.1:8080
+  // This avoids CORS issues and uses the configured proxy
+  const apiBaseURL = '/api'
   
   return {
     API_BASE_URL: apiBaseURL,

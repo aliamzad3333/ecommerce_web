@@ -39,11 +39,9 @@ const AdminProducts = () => {
   const loadProducts = async () => {
     try {
       setLoading(true)
-      const protocol = window.location.protocol
-      const baseUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:8080' 
-        : `${protocol}//${window.location.hostname}:8080`
-      const response = await fetch(`${baseUrl}/api/products`, {
+      // Use relative URL - nginx proxy handles /api -> backend on server
+      // Vite proxy handles /api -> localhost:8080 in development
+      const response = await fetch('/api/products', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
         }
@@ -129,14 +127,12 @@ const AdminProducts = () => {
         productData.offer_price = parseFloat(formData.offer_price)
       }
       
-      const protocol = window.location.protocol
-      const baseUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:8080' 
-        : `${protocol}//${window.location.hostname}:8080`
+      // Use relative URL - nginx proxy handles /api -> backend on server
+      // Vite proxy handles /api -> localhost:8080 in development
       const isEditing = !!editingProductId
       const url = isEditing
-        ? `${baseUrl}/api/admin/products/${editingProductId}`
-        : `${baseUrl}/api/admin/products`
+        ? `/api/admin/products/${editingProductId}`
+        : `/api/admin/products`
       const method = isEditing ? 'PUT' : 'POST'
       const response = await fetch(url, {
         method,
@@ -157,7 +153,7 @@ const AdminProducts = () => {
         if (imageFile && targetId) {
           const formDataUpload = new FormData()
           formDataUpload.append('image', imageFile)
-          const uploadResponse = await fetch(`${baseUrl}/api/admin/products/${targetId}/image`, {
+          const uploadResponse = await fetch(`/api/admin/products/${targetId}/image`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -292,11 +288,8 @@ const AdminProducts = () => {
                         onClick={async () => {
                           if (window.confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) {
                             try {
-                              const protocol = window.location.protocol
-      const baseUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:8080' 
-        : `${protocol}//${window.location.hostname}:8080`
-                              const response = await fetch(`${baseUrl}/api/admin/products/${product.id}`, {
+                              // Use relative URL - nginx proxy handles /api -> backend on server
+                              const response = await fetch(`/api/admin/products/${product.id}`, {
                                 method: 'DELETE',
                                 headers: {
                                   'Authorization': `Bearer ${localStorage.getItem('authToken')}`
