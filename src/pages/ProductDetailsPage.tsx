@@ -1,13 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 import { 
-  StarIcon,
-  HeartIcon,
-  ShoppingCartIcon,
   TruckIcon,
   ShieldCheckIcon,
-  ArrowLeftIcon,
   MinusIcon,
   PlusIcon,
   CheckCircleIcon,
@@ -16,31 +12,41 @@ import {
   MapPinIcon,
   LockClosedIcon
 } from '@heroicons/react/24/solid'
-import { HeartIcon as HeartOutlineIcon, PhoneIcon as PhoneOutlineIcon } from '@heroicons/react/24/outline'
+import { PhoneIcon as PhoneOutlineIcon, ArrowRightOnRectangleIcon, ShoppingCartIcon } from '@heroicons/react/24/outline'
 import { addToCart } from '../store/slices/cartSlice'
+import { logout } from '../store/slices/userSlice'
 import { apiClient } from '../services/api'
 import LoadingOverlay from '../components/molecules/LoadingOverlay'
 import OrderConfirmationModal from '../components/molecules/OrderConfirmationModal'
+import CartFlyout from '../components/molecules/CartFlyout'
+import type { RootState } from '../store/store'
 
 const ProductDetailsPage = () => {
   const { slug } = useParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const { currentUser, isAuthenticated } = useSelector((state: RootState) => state.user)
+  const { itemCount } = useSelector((state: RootState) => state.cart)
   
   const [product, setProduct] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [quantity, setQuantity] = useState(1)
-  const [isLiked, setIsLiked] = useState(false)
   const [isAddedToCart, setIsAddedToCart] = useState(false)
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  
+  const handleLogout = () => {
+    dispatch(logout())
+    navigate('/')
+  }
   
   // Checkout form state
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     address: '',
-    shippingMethod: 'outside'
+    shippingMethod: 'dhaka'
   })
-  const [deliveryCharge, setDeliveryCharge] = useState(70)
+  const [deliveryCharge, setDeliveryCharge] = useState(50)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showOrderConfirmation, setShowOrderConfirmation] = useState(false)
   const [orderConfirmationData, setOrderConfirmationData] = useState<any>(null)
@@ -108,6 +114,14 @@ const ProductDetailsPage = () => {
       }))
       setIsAddedToCart(true)
       setTimeout(() => setIsAddedToCart(false), 3000)
+      
+      // Scroll to the order form at the bottom
+      setTimeout(() => {
+        const formSection = document.getElementById('order-form')
+        if (formSection) {
+          formSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 500)
     }
   }
 
@@ -125,10 +139,10 @@ const ProductDetailsPage = () => {
   const handleShippingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setFormData(prev => ({ ...prev, shippingMethod: value }))
-    if (value === 'dhaka') {
+    if (value === 'dhaka' || value === 'chittagong') {
       setDeliveryCharge(50)
     } else {
-      setDeliveryCharge(70)
+      setDeliveryCharge(100)
     }
   }
 
@@ -163,7 +177,7 @@ const ProductDetailsPage = () => {
         shipping_address: {
           full_name: formData.name,
           address_line1: formData.address,
-          city: formData.shippingMethod === 'dhaka' ? 'Dhaka' : 'Outside Dhaka',
+          city: formData.shippingMethod === 'dhaka' ? 'Dhaka' : formData.shippingMethod === 'chittagong' ? 'Chittagong' : 'Other',
           state: 'Bangladesh',
           postal_code: '',
           country: 'Bangladesh',
@@ -206,8 +220,9 @@ const ProductDetailsPage = () => {
         name: '',
         phone: '',
         address: '',
-        shippingMethod: 'outside'
+        shippingMethod: 'dhaka'
       })
+      setDeliveryCharge(50)
       setQuantity(1)
       setErrorMessage('')
       
@@ -236,7 +251,7 @@ const ProductDetailsPage = () => {
             <div className="absolute inset-0 border-4 border-pink-200 rounded-full"></div>
             <div className="absolute inset-0 border-4 border-pink-600 rounded-full border-t-transparent animate-spin"></div>
           </div>
-          <p className="text-gray-600 text-lg font-medium">Loading product...</p>
+          <p className="text-gray-600 text-lg font-medium">পণ্য লোড হচ্ছে...</p>
         </div>
       </div>
     )
@@ -246,12 +261,12 @@ const ProductDetailsPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Product not found</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">পণ্য পাওয়া যায়নি</h2>
           <button
             onClick={() => navigate('/')}
             className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-3 rounded-lg hover:from-pink-600 hover:to-purple-700 transition-all transform hover:scale-105 font-semibold"
           >
-            Back to Home
+            হোমে ফিরে যান
           </button>
         </div>
       </div>
@@ -261,21 +276,75 @@ const ProductDetailsPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
       {/* Navigation Bar */}
-      <div className="bg-white shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2 text-gray-600 hover:text-pink-600 transition-colors"
-            >
-              <ArrowLeftIcon className="h-5 w-5" />
-              <span className="font-medium">Back to Shop</span>
-            </button>
-            
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span onClick={() => navigate('/')} className="hover:text-pink-600 cursor-pointer">Home</span>
-              <span>/</span>
-              <span className="text-pink-600 font-medium">{product.name}</span>
+            {/* Logo */}
+            <Link to="/" className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="url(#gradient)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="url(#gradientFill)"/>
+                  <path d="M9 22V12H15V22" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <defs>
+                    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor:"#ec4899", stopOpacity:1}} />
+                      <stop offset="100%" style={{stopColor:"#9333ea", stopOpacity:1}} />
+                    </linearGradient>
+                    <linearGradient id="gradientFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor:"#fce7f3", stopOpacity:0.3}} />
+                      <stop offset="100%" style={{stopColor:"#f3e8ff", stopOpacity:0.3}} />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">BRO SHOP BD</h1>
+                <p className="text-sm text-pink-100">Buy It</p>
+              </div>
+            </Link>
+
+            {/* Cart and User Authentication */}
+            <div className="flex items-center space-x-4">
+              {/* Cart Icon */}
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="flex items-center space-x-2 hover:opacity-80 transition-opacity relative"
+              >
+                <div className="relative">
+                  <ShoppingCartIcon className="h-8 w-8" />
+                  {itemCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                      {itemCount > 99 ? '99+' : itemCount}
+                    </span>
+                  )}
+                </div>
+                <span className="text-sm">My Cart</span>
+              </button>
+
+              {/* User Authentication */}
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2">
+                    <UserIcon className="h-6 w-6" />
+                    <span className="text-sm">{currentUser?.name}</span>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-1 text-sm hover:text-pink-200 transition-colors"
+                  >
+                    <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center space-x-1 text-sm hover:text-pink-200 transition-colors"
+                >
+                  <UserIcon className="h-5 w-5" />
+                  <span>Login</span>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -306,18 +375,6 @@ const ProductDetailsPage = () => {
                     <span className="text-9xl">🧸</span>
                   </div>
                 )}
-                
-                {/* Wishlist Button */}
-                <button
-                  onClick={() => setIsLiked(!isLiked)}
-                  className="absolute top-4 right-4 p-3 bg-white rounded-full shadow-lg hover:scale-110 transition-transform"
-                >
-                  {isLiked ? (
-                    <HeartIcon className="h-6 w-6 text-red-500" />
-                  ) : (
-                    <HeartOutlineIcon className="h-6 w-6 text-gray-600" />
-                  )}
-                </button>
 
                 {/* Stock Badge */}
                 {product.inStock ? (
@@ -338,24 +395,6 @@ const ProductDetailsPage = () => {
               {/* Product Title */}
               <div>
                 <h1 className="text-4xl font-bold text-gray-900 mb-3">{product.name}</h1>
-                <div className="flex items-center gap-4">
-                  {/* Rating */}
-                  <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <StarIcon
-                        key={i}
-                        className={`h-5 w-5 ${
-                          i < Math.floor(product.rating)
-                            ? 'text-yellow-400'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                    <span className="ml-2 text-sm text-gray-600">
-                      {product.rating.toFixed(1)} ({product.reviews} reviews)
-                    </span>
-                  </div>
-                </div>
               </div>
 
               {/* Price */}
@@ -372,10 +411,10 @@ const ProductDetailsPage = () => {
                     </div>
                     <div className="mt-3 flex items-center gap-3">
                       <span className="inline-block bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse-once">
-                        🔥 SAVE ৳{(product.price - product.offer_price).toFixed(2)}
+                        🔥 সাশ্রয় করুন ৳{(product.price - product.offer_price).toFixed(2)}
                       </span>
                       <span className="inline-block bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-                        {Math.round(((product.price - product.offer_price) / product.price) * 100)}% OFF
+                        {Math.round(((product.price - product.offer_price) / product.price) * 100)}% ছাড়
                       </span>
                     </div>
                   </>
@@ -391,7 +430,7 @@ const ProductDetailsPage = () => {
               {/* Description */}
               {product.description && (
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">Product Description</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">পণ্যের বিবরণ</h3>
                   <p className="text-gray-700 leading-relaxed">{product.description}</p>
                 </div>
               )}
@@ -399,7 +438,7 @@ const ProductDetailsPage = () => {
               {/* Specifications */}
               {product.specifications && (
                 <div className="bg-gray-50 rounded-2xl p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">Specifications</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">নির্দিষ্টকরণ</h3>
                   <div className="space-y-2 text-gray-700">
                     {product.specifications.split('\n').map((spec: string, index: number) => (
                       <div key={index} className="flex items-start gap-2">
@@ -414,14 +453,14 @@ const ProductDetailsPage = () => {
               {/* Material */}
               {product.material && (
                 <div className="flex items-center gap-2 text-gray-700">
-                  <span className="font-semibold">Material:</span>
+                  <span className="font-semibold">উপাদান:</span>
                   <span>{product.material}</span>
                 </div>
               )}
 
               {/* Quantity Selector */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Quantity</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">পরিমাণ</h3>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
                     <button
@@ -443,7 +482,7 @@ const ProductDetailsPage = () => {
                   </div>
                   
                   <div className="text-gray-600">
-                    <span className="font-semibold">Total:</span> ৳{((product.offer_price || product.price) * quantity).toFixed(2)}
+                    <span className="font-semibold">মোট:</span> ৳{((product.offer_price || product.price) * quantity).toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -467,7 +506,7 @@ const ProductDetailsPage = () => {
                   <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg animate-slideDown">
                     <div className="flex items-center gap-3">
                       <CheckCircleIcon className="h-6 w-6 text-green-500" />
-                      <p className="text-green-800 font-semibold">Product added to cart successfully!</p>
+                      <p className="text-green-800 font-semibold">পণ্য সফলভাবে কার্টে যোগ করা হয়েছে!</p>
                     </div>
                   </div>
                 )}
@@ -478,39 +517,17 @@ const ProductDetailsPage = () => {
                 <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl">
                   <TruckIcon className="h-8 w-8 text-blue-600" />
                   <div>
-                    <h4 className="font-semibold text-gray-900">Free Delivery</h4>
-                    <p className="text-sm text-gray-600">For orders over ৳500</p>
+                    <h4 className="font-semibold text-gray-900">বিনামূল্যে ডেলিভারি</h4>
+                    <p className="text-sm text-gray-600">১০০০ টাকার বেশি অর্ডারে</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
                   <ShieldCheckIcon className="h-8 w-8 text-green-600" />
                   <div>
-                    <h4 className="font-semibold text-gray-900">100% Safe</h4>
-                    <p className="text-sm text-gray-600">Certified products</p>
+                    <h4 className="font-semibold text-gray-900">১০০% অথেনটিক</h4>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Additional Info Section */}
-        <div className="mt-12 bg-white rounded-3xl shadow-xl p-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6 bg-gradient-to-br from-pink-50 to-pink-100 rounded-2xl">
-              <TruckIcon className="h-12 w-12 text-pink-600 mx-auto mb-4" />
-              <h3 className="font-bold text-gray-900 mb-2">বিনামূল্যে ডেলিভারি</h3>
-              <p className="text-sm text-gray-600">দ্রুত এবং নিরাপদ ডেলিভারি</p>
-            </div>
-            <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl">
-              <ShieldCheckIcon className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-              <h3 className="font-bold text-gray-900 mb-2">১০০% নিরাপত্তা গ্যারান্টি</h3>
-              <p className="text-sm text-gray-600">সমস্ত পণ্য পরীক্ষিত এবং প্রত্যয়িত</p>
-            </div>
-            <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl">
-              <StarIcon className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-              <h3 className="font-bold text-gray-900 mb-2">সেরা মানের পণ্য</h3>
-              <p className="text-sm text-gray-600">প্রিমিয়াম মানের নিশ্চয়তা</p>
             </div>
           </div>
         </div>
@@ -544,7 +561,7 @@ const ProductDetailsPage = () => {
               </>
             ) : (
               <div>
-                <span className="text-white text-xl md:text-2xl font-semibold">Price: </span>
+                <span className="text-white text-xl md:text-2xl font-semibold">দাম: </span>
                 <span className="text-white text-4xl md:text-5xl font-bold">৳{product.price.toFixed(2)} টাকা</span>
               </div>
             )}
@@ -564,14 +581,14 @@ const ProductDetailsPage = () => {
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              {product.inStock ? 'অর্ডার করতে চাই' : 'Out of Stock'}
+              {product.inStock ? 'অর্ডার করতে চাই' : 'স্টক নেই'}
             </button>
           </div>
 
           {/* Contact Info */}
           <div className="text-center space-y-6">
             <p className="text-white text-base md:text-lg font-medium px-4">
-              সরাসরি যোগাযোগ করতে কল করুন সকাল ১০.৩০ টা থেকে রাত ৯.০০ টা পর্যন্ত
+              সরাসরি যোগাযোগ করতে কল করুন সকাল ৮টা থেকে রাত ১২টা পর্যন্ত
             </p>
             <a
               href="tel:01718620866"
@@ -657,24 +674,9 @@ const ProductDetailsPage = () => {
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <TruckIcon className="h-6 w-6 text-pink-600" />
-                    Shipping
+                    শিপিং
                   </h3>
                   <div className="space-y-3">
-                    <label className="flex items-center justify-between p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-500 hover:bg-pink-50 transition-all">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="shippingMethod"
-                          value="outside"
-                          checked={formData.shippingMethod === 'outside'}
-                          onChange={handleShippingChange}
-                          className="h-5 w-5 text-pink-600 focus:ring-pink-500"
-                        />
-                        <span className="text-gray-900 font-medium">ঢাকার বাহিরে:</span>
-                      </div>
-                      <span className="font-bold text-pink-600">৳70.00</span>
-                    </label>
-
                     <label className="flex items-center justify-between p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-500 hover:bg-pink-50 transition-all">
                       <div className="flex items-center gap-3">
                         <input
@@ -685,9 +687,39 @@ const ProductDetailsPage = () => {
                           onChange={handleShippingChange}
                           className="h-5 w-5 text-pink-600 focus:ring-pink-500"
                         />
-                        <span className="text-gray-900 font-medium">ঢাকা সিটি:</span>
+                        <span className="text-gray-900 font-medium">ঢাকা সিটির ভিতরে</span>
                       </div>
-                      <span className="font-bold text-pink-600">৳50.00</span>
+                      <span className="font-bold text-pink-600">Tk 50.00</span>
+                    </label>
+
+                    <label className="flex items-center justify-between p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-500 hover:bg-pink-50 transition-all">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="shippingMethod"
+                          value="chittagong"
+                          checked={formData.shippingMethod === 'chittagong'}
+                          onChange={handleShippingChange}
+                          className="h-5 w-5 text-pink-600 focus:ring-pink-500"
+                        />
+                        <span className="text-gray-900 font-medium">চট্টগ্রাম সিটির ভিতরে</span>
+                      </div>
+                      <span className="font-bold text-pink-600">Tk 50.00</span>
+                    </label>
+
+                    <label className="flex items-center justify-between p-5 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-pink-500 hover:bg-pink-50 transition-all">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="shippingMethod"
+                          value="outside"
+                          checked={formData.shippingMethod === 'outside'}
+                          onChange={handleShippingChange}
+                          className="h-5 w-5 text-pink-600 focus:ring-pink-500"
+                        />
+                        <span className="text-gray-900 font-medium">ঢাকা এবং চট্টগ্রাম সিটির বাহিরে</span>
+                      </div>
+                      <span className="font-bold text-pink-600">Tk 100.00</span>
                     </label>
                   </div>
                 </div>
@@ -698,7 +730,7 @@ const ProductDetailsPage = () => {
                 <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl p-6 sticky top-24">
                   <h3 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                     <ShoppingCartIcon className="h-6 w-6 text-pink-600" />
-                    Your order
+                    আপনার অর্ডার
                   </h3>
 
                   {/* Product */}
@@ -726,28 +758,28 @@ const ProductDetailsPage = () => {
                   {/* Order Summary */}
                   <div className="space-y-3 border-t border-gray-300 pt-4">
                     <div className="flex justify-between text-gray-700">
-                      <span>Subtotal</span>
+                      <span>সাবটোটাল</span>
                       <span className="font-semibold">৳{((product.offer_price || product.price) * quantity).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-gray-700">
-                      <span>Shipping</span>
+                      <span>শিপিং</span>
                       <span className="font-semibold">৳{deliveryCharge.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-xl font-bold text-gray-900 pt-3 border-t border-gray-300">
-                      <span>Total</span>
+                      <span>মোট</span>
                       <span className="text-pink-600">৳{(((product.offer_price || product.price) * quantity) + deliveryCharge).toFixed(2)}</span>
                     </div>
                   </div>
 
                   {/* Cash on Delivery */}
                   <div className="mt-6 p-4 bg-white rounded-xl">
-                    <h4 className="font-bold text-gray-900 mb-2">Cash on delivery</h4>
-                    <p className="text-sm text-gray-600">Pay with cash upon delivery.</p>
+                    <h4 className="font-bold text-gray-900 mb-2">ক্যাশ অন ডেলিভারি</h4>
+                    <p className="text-sm text-gray-600">ডেলিভারির সময় নগদ অর্থ প্রদান করুন।</p>
                   </div>
 
                   {/* Privacy Policy */}
                   <p className="mt-4 text-xs text-gray-500 leading-relaxed">
-                    Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our privacy policy.
+                    আপনার ব্যক্তিগত তথ্য আপনার অর্ডার প্রক্রিয়া করতে, এই ওয়েবসাইট জুড়ে আপনার অভিজ্ঞতা সমর্থন করতে এবং আমাদের গোপনীয়তা নীতিতে বর্ণিত অন্যান্য উদ্দেশ্যে ব্যবহার করা হবে।
                   </p>
                 </div>
               </div>
@@ -784,9 +816,13 @@ const ProductDetailsPage = () => {
         }}
         orderData={orderConfirmationData}
       />
+
+      {/* Cart Flyout */}
+      <CartFlyout isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </div>
   )
 }
 
 export default ProductDetailsPage
+
 

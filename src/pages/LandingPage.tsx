@@ -9,10 +9,7 @@ import { addToCart } from '../store/slices/cartSlice'
 import CartFlyout from '../components/molecules/CartFlyout'
 import { 
   ShoppingCartIcon, 
-  MagnifyingGlassIcon,
-  TruckIcon,
-  ShieldCheckIcon,
-  TagIcon
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline'
 import { UserIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline'
 
@@ -469,41 +466,6 @@ const LandingPage = () => {
             ))}
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Service Benefits */}
-      <div className="py-16 bg-gradient-to-r from-pink-50 to-purple-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TruckIcon className="h-8 w-8 text-pink-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">বিনামূল্যে ডেলিভারি</h3>
-              <p className="text-gray-600">
-                ১০০০ টাকার বেশি অর্ডারে বিনামূল্যে ডেলিভারি। আমাদের দ্রুত এবং নির্ভরযোগ্য ডেলিভারি পরিষেবার মাধ্যমে আপনার শিশুর প্রয়োজনীয় জিনিসগুলি আপনার দরজায় পৌঁছে দিন।
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShieldCheckIcon className="h-8 w-8 text-purple-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">১০০% নিরাপত্তা গ্যারান্টি</h3>
-              <p className="text-gray-600">
-                আমাদের সমস্ত পণ্য শিশুদের জন্য নিরাপদ। আপনার ছোট্টটির নিরাপত্তা আমাদের অগ্রাধিকার এবং আমরা সর্বোচ্চ মানের পণ্য সরবরাহ করি।
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TagIcon className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">চমৎকার দৈনিক অফার</h3>
-              <p className="text-gray-600">
-                আমাদের দৈনিক ছাড় এবং বিশেষ অফারের মাধ্যমে শিশুর প্রয়োজনীয় জিনিসে আরও বেশি সাশ্রয় করুন। নিয়মিত নতুন অফার এবং আকর্ষণীয় ছাড় পেতে আমাদের সাথে থাকুন।
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
