@@ -70,14 +70,27 @@ class ApiClient {
         console.error('❌ API Error Response:', {
           status: response.status,
           statusText: response.statusText,
-          error: errorData
+          error: errorData,
+          url: url
         })
         throw new Error(errorData.error || errorData.details || errorData.message || 'Request failed')
       }
 
       return await response.json()
     } catch (error: any) {
-      console.error('API request failed:', error)
+      console.error('❌ API request failed:', {
+        error: error.message || error,
+        url: url,
+        endpoint: endpoint,
+        baseURL: this.baseURL,
+        errorType: error.name || 'Unknown'
+      })
+      
+      // Provide more helpful error messages
+      if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        throw new Error(`Network error: Unable to connect to API at ${url}. Please check if the backend server is running and accessible.`)
+      }
+      
       throw error
     }
   }

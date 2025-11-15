@@ -39,7 +39,10 @@ const AdminProducts = () => {
   const loadProducts = async () => {
     try {
       setLoading(true)
-      const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'http://130.94.40.85'
+      const protocol = window.location.protocol
+      const baseUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8080' 
+        : `${protocol}//${window.location.hostname}:8080`
       const response = await fetch(`${baseUrl}/api/products`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -126,7 +129,10 @@ const AdminProducts = () => {
         productData.offer_price = parseFloat(formData.offer_price)
       }
       
-      const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'http://130.94.40.85'
+      const protocol = window.location.protocol
+      const baseUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8080' 
+        : `${protocol}//${window.location.hostname}:8080`
       const isEditing = !!editingProductId
       const url = isEditing
         ? `${baseUrl}/api/admin/products/${editingProductId}`
@@ -286,7 +292,10 @@ const AdminProducts = () => {
                         onClick={async () => {
                           if (window.confirm(`Are you sure you want to delete "${product.name}"? This action cannot be undone.`)) {
                             try {
-                              const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:8080' : 'http://130.94.40.85'
+                              const protocol = window.location.protocol
+      const baseUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8080' 
+        : `${protocol}//${window.location.hostname}:8080`
                               const response = await fetch(`${baseUrl}/api/admin/products/${product.id}`, {
                                 method: 'DELETE',
                                 headers: {
