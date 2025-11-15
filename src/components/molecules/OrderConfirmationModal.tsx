@@ -67,11 +67,11 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderData }: OrderConfirmatio
               <CheckCircleIcon className="h-10 w-10 text-white" />
             </div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              Thank you for your purchase!
+              আপনার অর্ডারের জন্য ধন্যবাদ!
             </h2>
             <p className="text-gray-700 flex items-center justify-center gap-2">
               <CheckCircleIcon className="h-5 w-5 text-green-600" />
-              We will contact you soon to confirm your order.
+              আমরা শীঘ্রই আপনার অর্ডার নিশ্চিত করতে আপনার সাথে যোগাযোগ করব।
             </p>
           </div>
         </div>
@@ -80,17 +80,17 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderData }: OrderConfirmatio
         <div className="p-6 space-y-6">
           {/* Order Number Only */}
           <div className="bg-gradient-to-r from-pink-50 to-purple-50 border-l-4 border-pink-500 p-4 rounded-r-lg">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Order Summary:</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">অর্ডার টোটাল:</h3>
             <div className="space-y-1 text-sm">
               <p className="text-gray-700">
-                <span className="font-semibold">Order Number:</span> <span className="text-pink-600 font-bold">{orderData.order_number || orderData.id}</span>
+                <span className="font-semibold">অর্ডার নম্বর:</span> <span className="text-pink-600 font-bold">{orderData.order_number || orderData.id}</span>
               </p>
             </div>
           </div>
 
           {/* Products Ordered */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-semibold text-gray-900 mb-3">Products Ordered:</h4>
+            <h4 className="font-semibold text-gray-900 mb-3">অর্ডারকৃত পণ্য:</h4>
             <div className="space-y-2">
               {orderData.items.map((item, index) => (
                 <div key={index} className="flex items-center gap-2 text-gray-700">
@@ -103,7 +103,7 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderData }: OrderConfirmatio
             </div>
             <div className="mt-4 pt-4 border-t border-gray-300">
               <div className="flex justify-between items-center">
-                <span className="text-lg font-bold text-gray-900">Order Total:</span>
+                <span className="text-lg font-bold text-gray-900">অর্ডার টোটাল:</span>
                 <span className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">৳{orderData.total.toFixed(2)}</span>
               </div>
             </div>
@@ -116,7 +116,7 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderData }: OrderConfirmatio
                 <UserIcon className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Customer Name</p>
+                <p className="text-sm text-gray-600">গ্রাহকের নাম</p>
                 <p className="font-semibold text-gray-900">{orderData.shipping_address.full_name}</p>
               </div>
             </div>
@@ -125,7 +125,7 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderData }: OrderConfirmatio
                 <PhoneIcon className="h-6 w-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Phone Number</p>
+                <p className="text-sm text-gray-600">ফোন নম্বর</p>
                 <p className="font-semibold text-gray-900">{orderData.shipping_address.phone}</p>
               </div>
             </div>
@@ -134,7 +134,7 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderData }: OrderConfirmatio
                 <MapPinIcon className="h-6 w-6 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-600">Delivery Address</p>
+                <p className="text-sm text-gray-600">ডেলিভারি ঠিকানা</p>
                 <p className="font-semibold text-gray-900">
                   {orderData.shipping_address.address_line1}, {orderData.shipping_address.city}
                 </p>
@@ -149,14 +149,14 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderData }: OrderConfirmatio
             </h4>
             <div className="flex gap-3">
               <a
-                href="tel:01685270352"
+                href="tel:01718620866"
                 className="flex-1 flex items-center justify-center gap-2 bg-white text-pink-600 py-3 px-4 rounded-lg hover:bg-pink-50 transition-colors font-semibold"
               >
                 <PhoneIcon className="h-6 w-6" />
-                Call
+                কল করুন
               </a>
               <a
-                href="https://wa.me/8801685270352"
+                href="https://wa.me/8801718620866"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 flex items-center justify-center gap-2 bg-white text-pink-600 py-3 px-4 rounded-lg hover:bg-pink-50 transition-colors font-semibold"
@@ -168,7 +168,7 @@ const OrderConfirmationModal = ({ isOpen, onClose, orderData }: OrderConfirmatio
               </a>
             </div>
             <p className="text-center mt-3 text-sm">
-              হট লাইন: 01685270352
+              হট লাইন: 01718620866
             </p>
           </div>
         </div>

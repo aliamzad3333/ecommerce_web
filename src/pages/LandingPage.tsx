@@ -480,9 +480,9 @@ const LandingPage = () => {
               <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <TruckIcon className="h-8 w-8 text-pink-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">বিনামূল্যে এবং পরের দিন ডেলিভারি</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">বিনামূল্যে ডেলিভারি</h3>
               <p className="text-gray-600">
-                আমাদের দ্রুত এবং নির্ভরযোগ্য ডেলিভারি পরিষেবার মাধ্যমে আপনার শিশুর প্রয়োজনীয় জিনিসগুলি আপনার দরজায় পৌঁছে দিন।
+                ১০০০ টাকার বেশি অর্ডারে বিনামূল্যে ডেলিভারি। আমাদের দ্রুত এবং নির্ভরযোগ্য ডেলিভারি পরিষেবার মাধ্যমে আপনার শিশুর প্রয়োজনীয় জিনিসগুলি আপনার দরজায় পৌঁছে দিন।
               </p>
             </div>
             <div className="text-center">
@@ -491,7 +491,7 @@ const LandingPage = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">১০০% নিরাপত্তা গ্যারান্টি</h3>
               <p className="text-gray-600">
-                আমাদের সমস্ত পণ্য পরীক্ষিত এবং শিশুদের জন্য নিরাপদ হিসেবে সার্টিফাইড। আপনার ছোট্টটির নিরাপত্তা আমাদের অগ্রাধিকার।
+                আমাদের সমস্ত পণ্য শিশুদের জন্য নিরাপদ। আপনার ছোট্টটির নিরাপত্তা আমাদের অগ্রাধিকার এবং আমরা সর্বোচ্চ মানের পণ্য সরবরাহ করি।
               </p>
             </div>
             <div className="text-center">
@@ -500,7 +500,7 @@ const LandingPage = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">চমৎকার দৈনিক অফার</h3>
               <p className="text-gray-600">
-                নতুন অভিভাবকদের জন্য আমাদের দৈনিক ছাড় এবং বিশেষ অফারের মাধ্যমে শিশুর প্রয়োজনীয় জিনিসে আরও বেশি সাশ্রয় করুন।
+                আমাদের দৈনিক ছাড় এবং বিশেষ অফারের মাধ্যমে শিশুর প্রয়োজনীয় জিনিসে আরও বেশি সাশ্রয় করুন। নিয়মিত নতুন অফার এবং আকর্ষণীয় ছাড় পেতে আমাদের সাথে থাকুন।
               </p>
             </div>
           </div>
@@ -523,11 +523,11 @@ const LandingPage = () => {
             <div className="flex flex-wrap justify-center items-center gap-3 mb-4 text-sm">
               {/* Phone */}
               <a 
-                href="tel:+8801521330152" 
+                href="tel:+8801718620866" 
                 className="group bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-pink-500/50 border border-white/20 hover:border-pink-400"
               >
                 <span className="mr-2">📞</span>
-                <span className="text-white font-medium group-hover:text-pink-300 transition-colors">+88 01521330152</span>
+                <span className="text-white font-medium group-hover:text-pink-300 transition-colors">+88 01718620866</span>
               </a>
 
               {/* Location */}
@@ -548,17 +548,6 @@ const LandingPage = () => {
               >
                 <span className="mr-2">✉️</span>
                 <span className="text-white font-medium group-hover:text-pink-300 transition-colors">hello@broshopbd.com</span>
-              </a>
-
-              {/* Website */}
-              <a 
-                href="https://www.broshopbd.xyx" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="group bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:shadow-purple-500/50 border border-white/20 hover:border-purple-400"
-              >
-                <span className="mr-2">🌐</span>
-                <span className="text-white font-medium group-hover:text-purple-300 transition-colors">www.broshopbd.xyx</span>
               </a>
             </div>
 

@@ -574,11 +574,11 @@ const ProductDetailsPage = () => {
               সরাসরি যোগাযোগ করতে কল করুন সকাল ১০.৩০ টা থেকে রাত ৯.০০ টা পর্যন্ত
             </p>
             <a
-              href="tel:01685270352"
+              href="tel:01718620866"
               className="inline-flex items-center gap-3 bg-white rounded-xl px-8 py-4 shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all"
             >
               <PhoneIcon className="h-6 w-6 text-red-600" />
-              <span className="text-red-600 font-bold text-2xl">01685270352</span>
+              <span className="text-red-600 font-bold text-2xl">01718620866</span>
             </a>
           </div>
         </div>

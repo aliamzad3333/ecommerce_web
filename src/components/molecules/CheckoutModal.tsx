@@ -22,7 +22,6 @@ const CheckoutModal = ({ isOpen, onClose, onOrderSuccess }: CheckoutModalProps) 
     phone: '',
     address: '',
     shippingMethod: 'dhaka',
-    couponCode: '',
     orderNote: ''
   })
   const [deliveryCharge, setDeliveryCharge] = useState(50)
@@ -58,24 +57,17 @@ const CheckoutModal = ({ isOpen, onClose, onOrderSuccess }: CheckoutModalProps) 
     }
   }
 
-  const handleApplyCoupon = () => {
-    // TODO: Implement coupon validation and discount logic
-    if (formData.couponCode) {
-      // Placeholder for coupon logic
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!formData.name || !formData.phone || !formData.address) {
-      setErrorMessage('Please fill in all required fields')
+      setErrorMessage('দয়া করে সকল আবশ্যক তথ্য পূরণ করুন')
       setShowErrorToast(true)
       return
     }
 
     if (items.length === 0) {
-      setErrorMessage('Your cart is empty')
+      setErrorMessage('আপনার কার্ট খালি')
       setShowErrorToast(true)
       return
     }
@@ -199,7 +191,7 @@ const CheckoutModal = ({ isOpen, onClose, onOrderSuccess }: CheckoutModalProps) 
       console.log('🎊 All success states set!')
     } catch (error: any) {
       console.error('Order submission failed:', error)
-      setErrorMessage(error.message || 'Failed to place order. Please try again.')
+      setErrorMessage(error.message || 'অর্ডার সম্পন্ন হয়নি। আবার চেষ্টা করুন।')
       setShowErrorToast(true)
       setIsSubmitting(false)
     }
@@ -342,27 +334,6 @@ const CheckoutModal = ({ isOpen, onClose, onOrderSuccess }: CheckoutModalProps) 
               </div>
             </div>
 
-            {/* Coupon Code */}
-            <div className="mb-5">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  name="couponCode"
-                  value={formData.couponCode}
-                  onChange={handleInputChange}
-                  placeholder="কুপন কোড"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-                <button
-                  type="button"
-                  onClick={handleApplyCoupon}
-                  className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
-                >
-                  এপ্লাই
-                </button>
-              </div>
-            </div>
-
             {/* Product Details */}
             <div className="mb-5 p-3 bg-gray-50 rounded-lg">
               <h3 className="font-semibold text-gray-900 mb-3">পণ্য বিবরণ</h3>
@@ -379,11 +350,11 @@ const CheckoutModal = ({ isOpen, onClose, onOrderSuccess }: CheckoutModalProps) 
                     <p className="font-medium text-gray-900 mb-1 truncate">{item.name}</p>
                     <div className="flex items-center gap-3 text-sm">
                       <span className="text-gray-600">
-                        <span className="font-semibold text-gray-900">Quantity:</span> {item.quantity}
+                        <span className="font-semibold text-gray-900">পরিমাণ:</span> {item.quantity}
                       </span>
                       <span className="text-gray-400">•</span>
                       <span className="text-gray-600">
-                        <span className="font-semibold text-gray-900">Price:</span> ৳{item.price.toFixed(2)} × {item.quantity} = ৳{(item.price * item.quantity).toFixed(2)}
+                        <span className="font-semibold text-gray-900">দাম:</span> ৳{item.price.toFixed(2)} × {item.quantity} = ৳{(item.price * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -403,7 +374,7 @@ const CheckoutModal = ({ isOpen, onClose, onOrderSuccess }: CheckoutModalProps) 
 
             {/* Order Summary */}
             <div className="mb-5 p-3 bg-gray-50 rounded-lg">
-              <h3 className="font-semibold text-gray-900 mb-3">অর্ডার সুমারি</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">অর্ডার টোটাল</h3>
               <div className="space-y-2">
                 <div className="flex justify-between text-gray-700">
                   <span>সাব টোটাল</span>
@@ -425,13 +396,13 @@ const CheckoutModal = ({ isOpen, onClose, onOrderSuccess }: CheckoutModalProps) 
             {/* Order Note */}
             <div className="mb-5">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Order note
+                অর্ডার নোট
               </label>
               <textarea
                 name="orderNote"
                 value={formData.orderNote}
                 onChange={handleInputChange}
-                placeholder="Order note"
+                placeholder="অর্ডার সম্পর্কে কোনো বিশেষ নির্দেশনা দিন (ঐচ্ছিক)"
                 rows={3}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               />
@@ -443,7 +414,7 @@ const CheckoutModal = ({ isOpen, onClose, onOrderSuccess }: CheckoutModalProps) 
               disabled={isSubmitting}
               className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 px-6 rounded-lg font-bold text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Processing...' : 'আপনার অর্ডার কনফার্ম করতে ক্লিক করুন'}
+              {isSubmitting ? 'প্রক্রিয়াকরণ হচ্ছে...' : 'আপনার অর্ডার কনফার্ম করতে ক্লিক করুন'}
             </button>
           </form>
         </div>
@@ -452,7 +423,7 @@ const CheckoutModal = ({ isOpen, onClose, onOrderSuccess }: CheckoutModalProps) 
       {/* Success Toast */}
       {showSuccessToast && (
         <SuccessToast
-          message="Order has been placed successfully!"
+          message="অর্ডার সফলভাবে সম্পন্ন হয়েছে!"
           onClose={() => setShowSuccessToast(false)}
         />
       )}
