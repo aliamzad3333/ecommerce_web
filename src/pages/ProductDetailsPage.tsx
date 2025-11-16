@@ -427,36 +427,29 @@ const ProductDetailsPage = () => {
                 )}
               </div>
 
-              {/* Description */}
+              {/* Description - render each point on its own line */}
               {product.description && (
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 mb-3">পণ্যের বিবরণ</h3>
-                  <p className="text-gray-700 leading-relaxed">{product.description}</p>
-                </div>
-              )}
-
-              {/* Specifications */}
-              {product.specifications && (
-                <div className="bg-gray-50 rounded-2xl p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">নির্দিষ্টকরণ</h3>
                   <div className="space-y-2 text-gray-700">
-                    {product.specifications.split('\n').map((spec: string, index: number) => (
-                      <div key={index} className="flex items-start gap-2">
-                        <CheckCircleIcon className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span>{spec}</span>
-                      </div>
-                    ))}
+                    {product.description
+                      // Split by newline only, as per API contract
+                      .split(/\r?\n/g)
+                      .map((line: string) => line.trim())
+                      .filter((line: string) => line.length > 0)
+                      .map((point: string, index: number) => (
+                        <div key={index} className="flex items-start gap-2">
+                          {index > 0 && (
+                            <CheckCircleIcon className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          )}
+                          <span>{point}</span>
+                        </div>
+                      ))}
                   </div>
                 </div>
               )}
 
-              {/* Material */}
-              {product.material && (
-                <div className="flex items-center gap-2 text-gray-700">
-                  <span className="font-semibold">উপাদান:</span>
-                  <span>{product.material}</span>
-                </div>
-              )}
+              {/* Removed Specifications and Material sections per request */}
 
               {/* Quantity Selector */}
               <div>
