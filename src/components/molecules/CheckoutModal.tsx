@@ -186,6 +186,34 @@ const CheckoutModal = ({ isOpen, onClose, onOrderSuccess }: CheckoutModalProps) 
       setShowSuccessToast(true)
       
       console.log('📋 Calling onOrderSuccess callback')
+      
+      // Track Purchase event for Meta Pixel
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        const purchaseValue = response.order?.total || (total + deliveryCharge)
+        const contents = items.map(item => ({
+          id: item.id,
+          quantity: item.quantity,
+          item_price: item.price
+        }))
+        
+        ;(window as any).fbq('track', 'Purchase', {
+          value: purchaseValue,
+          currency: 'BDT',
+          contents: contents,
+          content_ids: items.map(item => item.id),
+          content_type: 'product',
+          num_items: items.reduce((sum, item) => sum + item.quantity, 0),
+          order_id: orderId
+        })
+        
+        console.log('📊 Meta Pixel Purchase event tracked:', {
+          value: purchaseValue,
+          currency: 'BDT',
+          order_id: orderId,
+          num_items: items.reduce((sum, item) => sum + item.quantity, 0)
+        })
+      }
+      
       onOrderSuccess?.(confirmationData)
       
       console.log('🎊 All success states set!')
