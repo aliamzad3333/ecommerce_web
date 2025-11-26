@@ -23,9 +23,9 @@ You need to add the following secrets to your GitHub repository:
 SERVER_HOST=your-server-ip-or-domain
 SERVER_USER=your-server-username
 SERVER_SSH_KEY=your-private-ssh-key
-```no want 
+```
 
-#### 2. Server Setup below
+#### 2. Server Setup
 
 On your server, ensure you have:
 
