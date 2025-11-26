@@ -6,7 +6,6 @@ import AdminLayout from './components/templates/AdminLayout'
 import ProtectedRoute from './components/atoms/ProtectedRoute'
 import Home from './pages/Home'
 import LandingPage from './pages/LandingPage'
-import ProductDetails from './pages/ProductDetails'
 import ProductDetailsPage from './pages/ProductDetailsPage'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
@@ -32,7 +31,6 @@ function AppContent() {
             <Route path="/product/:slug" element={<ProductDetailsPage />} />
             <Route path="/shop" element={<Layout />}>
               <Route index element={<Home />} />
-              <Route path="product/:id" element={<ProductDetails />} />
               <Route path="cart" element={<Cart />} />
               <Route path="checkout" element={
                 <ProtectedRoute>
