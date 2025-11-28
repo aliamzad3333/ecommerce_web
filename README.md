@@ -1,13 +1,17 @@
-# E-commerce Web Application
+# E-commerce Web Application - BRO SHOP BD
 
-A modern e-commerce application built with React, TypeScript, and Vite.
+A modern e-commerce application built with React, TypeScript, and Vite. This is a full-featured online shopping platform with admin dashboard, product management, and order processing capabilities.
 
 ## Features
 - 🛒 Shopping cart functionality
-- 👤 User authentication
-- 📱 Responsive design
+- 👤 User authentication and registration
+- 📱 Fully responsive design
 - 🎨 Modern UI with Tailwind CSS
 - 🚀 Automated deployment with GitHub Actions
+- 🔐 Admin dashboard for product and order management
+- 📦 Order management system
+- 💳 Cash on delivery support
+- 🔍 Product search and filtering
 
 ## Tech Stack
 - React 18
@@ -15,6 +19,7 @@ A modern e-commerce application built with React, TypeScript, and Vite.
 - Vite
 - Tailwind CSS
 - Redux Toolkit
+- React Router
 
 Currently, two official plugins are available:
 
