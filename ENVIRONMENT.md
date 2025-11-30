@@ -1,5 +1,7 @@
 # Environment Configuration
 
+This file contains environment variable configuration for the ecommerce application.
+
 This project automatically detects whether it's running locally or on the server and configures the API endpoints accordingly.
 
 ## How It Works
