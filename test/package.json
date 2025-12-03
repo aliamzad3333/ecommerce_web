@@ -1,0 +1,21 @@
+{
+  "name": "cheq-automation",
+  "version": "1.0.0",
+  "description": "Automation tests for Cheq partner portal using Page Object Model",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "open": "node run-test.js",
+    "login": "node run-login.js",
+    "setup": "npm install && npx playwright install chromium"
+  },
+  "keywords": ["automation", "testing", "playwright", "pom"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}
+
